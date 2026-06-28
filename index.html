@@ -6,6 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Trainings-Tracker</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 :root {
   --bg:       #0a0c12;
@@ -233,6 +236,56 @@ input.val.has-val{border-color:rgba(91,143,255,0.3);background:rgba(91,143,255,0
 </head>
 <body>
 
+    // Authentification bei supabase
+<div id="auth-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;transition:opacity 0.3s;">
+  <div class="card" style="width:100%;max-width:360px;text-align:center;">
+    <div style="font-size:24px;margin-bottom:8px;">💪</div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:24px;">Trainer Login</h2>
+    
+    <input type="email" id="auth-email" placeholder="E-Mail Adresse" class="val" style="width:100%;margin-bottom:12px;padding:12px;font-size:15px;text-align:left;">
+    <input type="password" id="auth-password" placeholder="Passwort" class="val" style="width:100%;margin-bottom:24px;padding:12px;font-size:15px;text-align:left;">
+    
+    <button class="done-btn marked" onclick="handleLogin()" id="btn-login">Einloggen</button>
+    <button class="done-btn" onclick="handleRegister()" id="btn-register" style="margin-top:8px;">Neu hier? Registrieren</button>
+    
+    <div id="auth-error" style="color:var(--danger);font-size:12px;margin-top:12px;min-height:16px;"></div>
+  </div>
+</div>
+
+<!-- Onboarding-Bildschirm -->
+<div id="onboarding-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);z-index:9998;display:none;align-items:center;justify-content:center;padding:16px;">
+  <div class="card" style="width:100%;max-width:400px;max-height:90vh;overflow-y:auto;">
+    <div style="font-size:24px;margin-bottom:8px;text-align:center;">👋</div>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;text-align:center;">Willkommen beim Tracker!</h2>
+    <p style="font-size:12px;color:var(--muted2);margin-bottom:20px;text-align:center;">Lass uns dein Profil einrichten.</p>
+    
+    <label style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;display:block;">Wie sollen wir dich nennen?</label>
+    <input type="text" id="ob-name" placeholder="Dein Vorname" class="val" style="width:100%;margin-bottom:16px;padding:12px;text-align:left;">
+    
+    <div style="display:flex;gap:12px;margin-bottom:16px;">
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;display:block;">Größe (cm)</label>
+        <input type="number" id="ob-height" placeholder="180" class="val" style="width:100%;padding:12px;text-align:left;">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;display:block;">Gewicht (kg)</label>
+        <input type="number" id="ob-weight" placeholder="75" class="val" style="width:100%;padding:12px;text-align:left;">
+      </div>
+    </div>
+
+    <label style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px;display:block;">Was ist dein Hauptziel?</label>
+    <select id="ob-goal" class="val" style="width:100%;margin-bottom:24px;padding:12px;text-align:left;background:var(--bg4);">
+      <option value="hybrid">Hybrid-Athlet (Kraft + Ausdauer)</option>
+      <option value="muscle">Muskelaufbau (Hypertrophie)</option>
+      <option value="fatloss">Gewichtsverlust & Straffung</option>
+      <option value="health">Gesundheit & Mobility</option>
+    </select>
+    
+    <button class="done-btn marked" onclick="saveOnboarding()">Profil speichern & Starten</button>
+  </div>
+</div>
+
+    // Navigation
 <div class="nav">
   <span class="nav-brand">💪 Trainer</span>
   <div class="nav-divider"></div>
@@ -254,7 +307,139 @@ input.val.has-val{border-color:rgba(91,143,255,0.3);background:rgba(91,143,255,0
 <div id="settings" class="page"></div>
 <div class="toast" id="toast"></div>
 
+
+
+// ══════════════════════════════════════════════════════════════════════════════════════ JAVASCRIPT ══════════════════════════════════════════════════════════════════════════════════════
+
+
+
 <script>
+// ═══════════════════════════════════════════
+// SUPABASE BACKEND (Auth & DB)
+// ═══════════════════════════════════════════
+// Hier kommen später deine echten Supabase-Daten rein
+const SUPABASE_URL = 'https://lrjkmjkwxbdyjdbmvqul.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_x88M1f5U4sZtdySW4D8_Jw_mct1c7qw';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// Prüfen, ob schon jemand eingeloggt ist
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    currentUser = session.user;
+    document.getElementById('auth-overlay').style.display = 'none'; // Login verstecken
+    await checkProfile(); // Deine App starten
+  }
+}
+
+// Einloggen
+async function handleLogin() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const errDiv = document.getElementById('auth-error');
+  
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
+  if (error) {
+    errDiv.textContent = error.message;
+  } else {
+    errDiv.textContent = '';
+    currentUser = data.user;
+    document.getElementById('auth-overlay').style.opacity = '0';
+    setTimeout(() => document.getElementById('auth-overlay').style.display = 'none', 300);
+    await checkProfile();
+  }
+}
+
+// ═══════════════════════════════════════════
+// ONBOARDING & PROFIL LOGIK
+// ═══════════════════════════════════════════
+
+// Prüft, ob der Nutzer schon ein Profil hat. Wenn nicht -> Onboarding zeigen
+async function checkProfile() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', currentUser.id)
+    .single();
+
+  if (error && error.code === 'PGRST116') {
+    // Fehlercode bedeutet: Keine Zeile gefunden -> Onboarding anzeigen
+    document.getElementById('onboarding-overlay').style.display = 'flex';
+  } else if (data) {
+    // Profil existiert bereits, App normal laden
+    window.userProfile = data; // Wir speichern das Profil global für später
+    document.getElementById('onboarding-overlay').style.display = 'none';
+    renderToday(); 
+  }
+}
+
+// Onboarding Daten speichern
+async function saveOnboarding() {
+  const username = document.getElementById('ob-name').value;
+  const height = document.getElementById('ob-height').value;
+  const weight = document.getElementById('ob-weight').value;
+  const goal = document.getElementById('ob-goal').value;
+
+  if(!username || !height || !weight) {
+    // Hier wird davon ausgegangen, dass du eine 'toast' Funktion hast
+    alert("Bitte fülle alle Felder aus!"); 
+    return;
+  }
+
+  // Generiere den zufälligen 4-stelligen Tag (z.B. #4921)
+  const tag = '#' + Math.floor(1000 + Math.random() * 9000);
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert([
+      { 
+        id: currentUser.id, 
+        username: username, 
+        tag: tag,
+        height: parseFloat(height),
+        weight: parseFloat(weight),
+        goal: goal
+      }
+    ]);
+
+  if (error) {
+    alert("Fehler beim Speichern: " + error.message);
+  } else {
+    alert("Willkommen, " + username + tag + "!");
+    document.getElementById('onboarding-overlay').style.display = 'none';
+    await checkProfile(); // Lädt die Daten und startet die App
+  }
+}
+
+// Registrieren (Account erstellen)
+async function handleRegister() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const errDiv = document.getElementById('auth-error');
+  
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  
+  if (error) {
+    errDiv.textContent = error.message;
+  } else {
+    errDiv.style.color = 'var(--run)';
+    errDiv.textContent = 'Account erstellt! Du kannst dich jetzt einloggen.';
+  }
+}
+
+// Logout-Funktion (kannst du später in die Settings-Seite einbauen)
+async function handleLogout() {
+  await supabase.auth.signOut();
+  currentUser = null;
+  document.getElementById('auth-overlay').style.display = 'flex';
+  document.getElementById('auth-overlay').style.opacity = '1';
+}
+
+// App initialisieren
+checkSession();
 // ═══════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════
