@@ -1,1406 +1,183 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0c12">
-<title>💪 Trainings-Tracker</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{
-  --bg:#0a0c12;--bg2:#10131d;--bg3:#161923;--bg4:#1c2030;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
-  --text:#eef0f8;--muted:#5a6080;--muted2:#8890b0;
-  --upper:#5b8fff;--upper-bg:rgba(91,143,255,0.1);
-  --lower:#a78bfa;--lower-bg:rgba(167,139,250,0.1);
-  --run:#34d399;--run-bg:rgba(52,211,153,0.1);
-  --mob:#fbbf24;--mob-bg:rgba(251,191,36,0.1);
-  --danger:#f87171;
-  --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow-x:hidden}
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100%;padding-bottom:80px}
-input,select,button,textarea{font-family:var(--font);-webkit-appearance:none;appearance:none}
-
-/* ── AUTH OVERLAY ── */
-.auth-overlay{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-box{width:100%;max-width:360px;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px 24px}
-.auth-logo{font-size:32px;text-align:center;margin-bottom:8px}
-.auth-title{font-size:20px;font-weight:700;text-align:center;margin-bottom:6px}
-.auth-sub{font-size:12px;color:var(--muted2);text-align:center;margin-bottom:24px}
-.auth-input{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:15px;padding:12px 14px;outline:none;transition:border-color .15s;margin-bottom:10px}
-.auth-input:focus{border-color:var(--upper)}
-.auth-btn{width:100%;border:none;border-radius:10px;font-size:14px;font-weight:600;padding:13px;cursor:pointer;transition:all .2s;margin-bottom:8px}
-.auth-btn-primary{background:linear-gradient(135deg,var(--upper),#4a7de8);color:#fff}
-.auth-btn-primary:hover{opacity:.9}
-.auth-btn-secondary{background:var(--bg4);border:1px solid var(--border2);color:var(--muted2)}
-.auth-btn-secondary:hover{color:var(--text);border-color:var(--border2)}
-.auth-btn:disabled{opacity:.5;cursor:not-allowed}
-.auth-error{color:var(--danger);font-size:12px;text-align:center;min-height:18px;margin-top:4px}
-.auth-success{color:var(--run);font-size:12px;text-align:center;min-height:18px;margin-top:4px}
-.auth-tabs{display:flex;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:20px;gap:3px}
-.auth-tab{flex:1;background:none;border:none;color:var(--muted2);font-size:13px;font-weight:500;padding:8px;border-radius:7px;cursor:pointer;transition:all .15s}
-.auth-tab.on{background:var(--bg2);color:var(--text);font-weight:600}
-
-/* ── ONBOARDING ── */
-.onboard-overlay{position:fixed;inset:0;background:var(--bg);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
-.onboard-box{width:100%;max-width:400px;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px 24px}
-.onboard-step{display:none}.onboard-step.on{display:block}
-.step-dots{display:flex;justify-content:center;gap:6px;margin-bottom:20px}
-.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .2s}
-.step-dot.on{background:var(--upper);width:20px;border-radius:4px}
-.ob-field-row{display:flex;gap:10px;margin-bottom:14px}
-.ob-field{flex:1}
-.ob-label{font-size:11px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;display:block}
-.ob-input{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:15px;padding:11px 13px;outline:none;transition:border-color .15s}
-.ob-input:focus{border-color:var(--upper)}
-.goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px}
-.goal-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s;text-align:center}
-.goal-card:hover{border-color:var(--border2)}
-.goal-card.sel{border-color:var(--upper);background:var(--upper-bg)}
-.goal-card-icon{font-size:22px;margin-bottom:5px}
-.goal-card-label{font-size:12px;font-weight:600;color:var(--text)}
-.goal-card-sub{font-size:10px;color:var(--muted2);margin-top:2px}
-
-/* ── NAV ── */
-.nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(10,12,18,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;height:52px;gap:2px}
-.nav-brand{font-size:15px;font-weight:700;letter-spacing:-.5px;background:linear-gradient(135deg,var(--upper),var(--run));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-right:6px;white-space:nowrap}
-.nav-divider{width:1px;height:20px;background:var(--border2);margin:0 4px;flex-shrink:0}
-.nav-btn{background:none;border:none;color:var(--muted2);font-size:12px;font-weight:500;padding:6px 9px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:all .15s}
-.nav-btn:hover{color:var(--text);background:var(--bg4)}
-.nav-btn.on{color:var(--text);background:var(--bg3);border:1px solid var(--border2)}
-.nav-scroll{display:flex;align-items:center;flex:1;overflow-x:auto;gap:2px;scrollbar-width:none}
-.nav-scroll::-webkit-scrollbar{display:none}
-.nav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--upper),var(--lower));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;cursor:pointer;margin-left:4px}
-
-/* ── PAGES ── */
-.page{display:none;padding:68px 16px 16px;max-width:760px;margin:0 auto;animation:fadeIn .2s ease}
-.page.on{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-
-/* ── DASHBOARD WIDGETS ── */
-.widget-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
-.widget{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px}
-.widget-label{font-size:10px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:flex;align-items:center;gap:5px}
-.widget-val{font-size:26px;font-weight:800;letter-spacing:-1px;color:var(--text);line-height:1}
-.widget-unit{font-size:11px;color:var(--muted2);margin-top:2px;font-weight:500}
-.widget-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:8px}
-.widget-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
-.widget-input-row{display:flex;gap:6px;margin-top:8px}
-.widget-input{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:14px;font-weight:600;padding:7px 10px;outline:none;transition:border-color .15s;text-align:center}
-.widget-input:focus{border-color:var(--upper)}
-.widget-add-btn{background:var(--upper-bg);border:1px solid rgba(91,143,255,0.2);color:var(--upper);border-radius:7px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer}
-
-/* ── CARDS ── */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
-.card-sm{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap}
-.card-title{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-
-/* ── BADGES ── */
-.badge{font-size:10px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:20px;text-transform:uppercase}
-.b-upper{background:var(--upper-bg);color:var(--upper);border:1px solid rgba(91,143,255,.2)}
-.b-lower{background:var(--lower-bg);color:var(--lower);border:1px solid rgba(167,139,250,.2)}
-.b-run{background:var(--run-bg);color:var(--run);border:1px solid rgba(52,211,153,.2)}
-.b-mob{background:var(--mob-bg);color:var(--mob);border:1px solid rgba(251,191,36,.2)}
-
-/* ── WEEK GRID ── */
-.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:16px}
-.wday{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s}
-.wday:hover{border-color:var(--border2);background:var(--bg4)}
-.wday.done{border-color:var(--run)!important;background:var(--run-bg)}
-.wday.selected{border-color:var(--upper);background:var(--upper-bg)}
-.wday-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;font-weight:600}
-.wday-type{font-size:9px;font-weight:700;margin-bottom:5px;min-height:12px}
-.wday-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);margin:0 auto}
-.wday.done .wday-dot{background:var(--run)}
-
-/* ── EXERCISE TABLE ── */
-.ex-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.ex-table{width:100%;border-collapse:collapse;min-width:320px}
-.ex-table th{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 8px 10px;text-align:left;font-weight:600;border-bottom:1px solid var(--border)}
-.ex-table th:not(:first-child){text-align:center}
-.ex-table td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
-.ex-table tr:last-child td{border-bottom:none}
-.ex-table td:not(:first-child){text-align:center}
-.ex-name{font-size:13px;font-weight:500;color:var(--text)}
-.ex-target{font-size:10px;color:var(--muted2);margin-top:2px;font-weight:500}
-.ex-note{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.3}
-.ex-suggest{font-size:10px;color:var(--mob);margin-top:2px;font-weight:500}
-input.val{background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;width:56px;padding:6px 4px;text-align:center;transition:border-color .15s;outline:none}
-input.val:focus{border-color:var(--upper)}
-input.val.has-val{border-color:rgba(91,143,255,.3);background:rgba(91,143,255,.06)}
-
-/* ── RING ── */
-.ring-wrap{position:relative;width:80px;height:80px;flex-shrink:0}
-.ring-wrap svg{transform:rotate(-90deg)}
-.ring-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
-.ring-n{font-size:18px;font-weight:700;color:var(--text);line-height:1}
-.ring-l{font-size:9px;color:var(--muted2);margin-top:2px;font-weight:500}
-
-/* ── DONE BTN ── */
-.done-btn{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;color:var(--muted2);font-size:13px;font-weight:600;padding:12px;cursor:pointer;margin-top:14px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
-.done-btn:hover{border-color:var(--run);color:var(--run);background:var(--run-bg)}
-.done-btn.marked{background:var(--run-bg);border-color:var(--run);color:var(--run)}
-
-/* ── RUN ── */
-.run-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
-@media(max-width:400px){.run-grid{grid-template-columns:1fr 1fr}}
-.run-field label{font-size:10px;color:var(--muted2);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.run-field input{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:9px;color:var(--text);font-size:16px;padding:10px 12px;font-weight:600;transition:border-color .15s;outline:none}
-.run-field input:focus{border-color:var(--run)}
-.run-field input.has-val{border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.05)}
-.pace-display{background:linear-gradient(135deg,var(--run-bg),rgba(52,211,153,.05));border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:14px;text-align:center;margin:12px 0}
-.pace-label{font-size:10px;color:var(--run);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.pace-value{font-size:30px;font-weight:800;color:var(--run);letter-spacing:-1px}
-.pace-unit{font-size:12px;color:var(--muted2);margin-top:2px;font-weight:500}
-.pace-bar-wrap{margin-top:10px}
-.pace-bar-label{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
-.pace-bar{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
-.pace-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--run),var(--upper));transition:width .5s ease}
-.feel-row{display:flex;gap:6px;margin-top:8px}
-.feel-btn{flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:8px;color:var(--muted2);font-size:14px;padding:8px;cursor:pointer;transition:all .15s;text-align:center}
-.feel-btn.on{border-color:var(--run);background:var(--run-bg)}
-
-/* ── MOBILITY ── */
-.mob-list{display:flex;flex-direction:column;gap:8px}
-.mob-item{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .15s}
-.mob-item.checked{border-color:var(--mob);background:var(--mob-bg)}
-.mob-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all .15s;color:transparent}
-.mob-item.checked .mob-check{background:var(--mob);border-color:var(--mob);color:#000}
-.mob-name{font-size:13px;font-weight:500}
-.mob-meta{font-size:11px;color:var(--muted2);margin-top:1px}
-
-/* ── PREV / SUGGEST ── */
-.prev-header{display:flex;align-items:center;gap:6px;margin:16px 0 10px}
-.prev-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.prev-badge{font-size:10px;background:var(--bg4);border:1px solid var(--border);color:var(--muted2);padding:2px 8px;border-radius:10px}
-.prev-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
-.prev-row:last-child{border-bottom:none}
-.prev-key{color:var(--muted2)}
-.prev-val{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
-.pr-tag{font-size:9px;background:rgba(251,191,36,.15);color:var(--mob);border:1px solid rgba(251,191,36,.2);padding:1px 6px;border-radius:8px;margin-left:5px;font-weight:700}
-
-/* ── WEEK PAGE ── */
-.week-sel{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.week-nav{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.week-nav:disabled{opacity:.3;cursor:not-allowed}
-.week-label{font-size:14px;font-weight:600;flex:1;text-align:center}
-.prog-wrap{margin-bottom:6px}
-.prog-lbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted2);margin-bottom:6px;font-weight:500}
-.prog-bar{height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
-.prog-fill{height:100%;border-radius:3px;transition:width .5s ease}
-.day-sum{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s}
-.day-sum:hover{border-color:var(--border2);background:var(--bg3)}
-.day-sum.done-card{border-color:rgba(52,211,153,.25);background:rgba(52,211,153,.04)}
-.day-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-
-/* ── STATS ── */
-.stats-big-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.stat-big{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px}
-.stat-big-n{font-size:34px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:4px}
-.stat-big-l{font-size:12px;color:var(--muted2);font-weight:500}
-.stat-big-sub{font-size:11px;color:var(--muted);margin-top:4px}
-.pr-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
-.pr-item:last-child{border-bottom:none}
-.pr-name{font-size:13px;font-weight:500;flex:1}
-.pr-val{font-size:14px;font-weight:700;color:var(--upper);font-variant-numeric:tabular-nums}
-.pr-bar-wrap{flex:1.5}
-.mini-bar{height:3px;background:var(--bg4);border-radius:2px;overflow:hidden}
-.mini-fill{height:100%;border-radius:2px;background:var(--upper)}
-.chart-bars{display:flex;align-items:flex-end;gap:4px;height:80px;margin-top:8px}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
-.bar-inner{width:100%;border-radius:4px 4px 0 0;background:var(--upper-bg);border:1px solid rgba(91,143,255,.15);min-height:2px}
-.bar-inner.filled{background:linear-gradient(180deg,var(--upper),rgba(91,143,255,.4))}
-.bar-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;font-weight:600}
-
-/* ── LOG ── */
-.log-entry{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px}
-.log-date{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.log-when{font-size:11px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.log-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.log-row:last-child{border-bottom:none}
-.log-key{color:var(--muted2)}
-.log-val{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
-
-/* ── SETTINGS ── */
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);gap:12px}
-.settings-row:last-child{border-bottom:none}
-.settings-label{font-size:14px;font-weight:500}
-.settings-sub{font-size:11px;color:var(--muted2);margin-top:2px}
-.settings-btn{background:var(--bg4);border:1px solid var(--border);color:var(--upper);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .15s}
-.settings-btn:hover{border-color:var(--upper);background:var(--upper-bg)}
-.danger-btn{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:var(--danger);border-radius:9px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
-.danger-btn:hover{background:rgba(248,113,113,.18)}
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
-.toggle{width:42px;height:24px;background:var(--bg4);border:1px solid var(--border2);border-radius:12px;position:relative;cursor:pointer;transition:background .2s}
-.toggle.on{background:var(--upper)}
-.toggle-thumb{width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;left:3px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.toggle.on .toggle-thumb{transform:translateX(18px)}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:10px 18px;font-size:13px;font-weight:500;color:var(--text);z-index:9990;opacity:0;transition:all .3s;white-space:nowrap;pointer-events:none;backdrop-filter:blur(20px)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── MISC ── */
-.slabel{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin:0 0 8px}
-.phase-banner{background:linear-gradient(135deg,var(--upper-bg),var(--lower-bg));border:1px solid rgba(91,143,255,.15);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
-.phase-icon{font-size:20px}
-.phase-text{font-size:13px;font-weight:600}
-.phase-sub{font-size:11px;color:var(--muted2);margin-top:1px}
-.empty{text-align:center;color:var(--muted);padding:32px 0;font-size:13px}
-.profile-banner{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
-.profile-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--upper),var(--lower));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
-.calcs-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
-.calc-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:12px}
-.calc-n{font-size:22px;font-weight:800;letter-spacing:-1px;margin-bottom:2px}
-.calc-l{font-size:10px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-
-@media(max-width:480px){.stats-big-grid{grid-template-columns:1fr 1fr}.stat-big-n{font-size:28px}.week-grid .wday-type{display:none}}
-@media(max-width:360px){.stats-big-grid{grid-template-columns:1fr}.run-grid{grid-template-columns:1fr 1fr}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0c12">
+  <meta name="description" content="Dein persönlicher Fitness Tracker – Gym, Laufen & Gewichtsverlauf">
+  
+  <title>💪 Trainings-Tracker</title>
+  
+  <!-- Externe Bibliotheken (Supabase für Backend-Verbindung) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Unser separates CSS-Stylesheet für das Premium-Design -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- AUTH OVERLAY -->
-<div class="auth-overlay" id="authOverlay">
-  <div class="auth-box">
-    <div class="auth-logo">💪</div>
-    <div class="auth-title">Trainings-Tracker</div>
-    <div class="auth-sub">Dein persönlicher Gym & Lauf Begleiter</div>
-    <div class="auth-tabs">
-      <button class="auth-tab on" onclick="switchAuthTab('login',this)">Einloggen</button>
-      <button class="auth-tab" onclick="switchAuthTab('register',this)">Registrieren</button>
-    </div>
-    <input class="auth-input" type="email" id="authEmail" placeholder="E-Mail Adresse"
-      onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
-    <input class="auth-input" type="password" id="authPassword" placeholder="Passwort (min. 6 Zeichen)"
-      onkeydown="if(event.key==='Enter')handleAuth()">
-    <div id="authConfirmWrap" style="display:none">
-      <input class="auth-input" type="password" id="authConfirm" placeholder="Passwort bestätigen"
+  <!-- ==========================================================================
+       AUTHENTIFIZIERUNG (Login / Registrierungs-Maske)
+       ========================================================================== -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-box">
+      <div class="auth-logo">💪</div>
+      <div class="auth-title">Trainings-Tracker</div>
+      <div class="auth-sub">Dein persönlicher Gym & Lauf Begleiter</div>
+      
+      <!-- Tabs zum Wechseln des Modus -->
+      <div class="auth-tabs">
+        <button class="auth-tab on" onclick="switchAuthTab('login',this)">Einloggen</button>
+        <button class="auth-tab" onclick="switchAuthTab('register',this)">Registrieren</button>
+      </div>
+      
+      <!-- Eingabefelder -->
+      <input class="auth-input" type="email" id="authEmail" placeholder="E-Mail Adresse"
+        onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
+        
+      <input class="auth-input" type="password" id="authPassword" placeholder="Passwort (min. 6 Zeichen)"
         onkeydown="if(event.key==='Enter')handleAuth()">
-    </div>
-    <button class="auth-btn auth-btn-primary" id="authSubmitBtn" onclick="handleAuth()">Einloggen</button>
-    <div id="authMsg" class="auth-error"></div>
-  </div>
-</div>
-
-<!-- ONBOARDING -->
-<div class="onboard-overlay" id="onboardOverlay">
-  <div class="onboard-box">
-    <div class="step-dots">
-      <div class="step-dot on" id="dot0"></div>
-      <div class="step-dot" id="dot1"></div>
-    </div>
-
-    <div class="onboard-step on" id="obStep0">
-      <div style="font-size:26px;text-align:center;margin-bottom:8px">👋</div>
-      <h2 style="font-size:18px;font-weight:700;text-align:center;margin-bottom:6px">Willkommen!</h2>
-      <p style="font-size:12px;color:var(--muted2);text-align:center;margin-bottom:20px">Lass uns dein Profil einrichten – dauert 30 Sekunden.</p>
-      <span class="ob-label">Dein Name</span>
-      <input class="ob-input" type="text" id="obName" placeholder="Vorname" style="margin-bottom:14px">
-      <div class="ob-field-row">
-        <div class="ob-field">
-          <span class="ob-label">Größe (cm)</span>
-          <input class="ob-input" type="number" inputmode="numeric" id="obHeight" placeholder="180" onfocus="this.select()">
-        </div>
-        <div class="ob-field">
-          <span class="ob-label">Gewicht (kg)</span>
-          <input class="ob-input" type="number" inputmode="decimal" id="obWeight" placeholder="75" onfocus="this.select()">
-        </div>
+        
+      <div id="authConfirmWrap" style="display:none">
+        <input class="auth-input" type="password" id="authConfirm" placeholder="Passwort bestätigen"
+          onkeydown="if(event.key==='Enter')handleAuth()">
       </div>
-      <span class="ob-label">Alter</span>
-      <input class="ob-input" type="number" inputmode="numeric" id="obAge" placeholder="25" style="margin-bottom:20px" onfocus="this.select()">
-      <button class="done-btn marked" onclick="obNext()">Weiter →</button>
-    </div>
-
-    <div class="onboard-step" id="obStep1">
-      <div style="font-size:26px;text-align:center;margin-bottom:8px">🎯</div>
-      <h2 style="font-size:18px;font-weight:700;text-align:center;margin-bottom:6px">Dein Ziel</h2>
-      <p style="font-size:12px;color:var(--muted2);text-align:center;margin-bottom:16px">Was willst du hauptsächlich erreichen?</p>
-      <div class="goal-grid" id="goalGrid">
-        <div class="goal-card sel" data-val="hybrid" onclick="selectGoal(this)">
-          <div class="goal-card-icon">⚡</div>
-          <div class="goal-card-label">Hybrid-Athlet</div>
-          <div class="goal-card-sub">Kraft + Ausdauer</div>
-        </div>
-        <div class="goal-card" data-val="muscle" onclick="selectGoal(this)">
-          <div class="goal-card-icon">💪</div>
-          <div class="goal-card-label">Muskelaufbau</div>
-          <div class="goal-card-sub">Hypertrophie</div>
-        </div>
-        <div class="goal-card" data-val="fatloss" onclick="selectGoal(this)">
-          <div class="goal-card-icon">🔥</div>
-          <div class="goal-card-label">Gewichtsverlust</div>
-          <div class="goal-card-sub">Straffung & Fett</div>
-        </div>
-        <div class="goal-card" data-val="health" onclick="selectGoal(this)">
-          <div class="goal-card-icon">🧘</div>
-          <div class="goal-card-label">Gesundheit</div>
-          <div class="goal-card-sub">Mobility & Fitness</div>
-        </div>
-      </div>
-      <div id="obSaveError" style="color:var(--danger);font-size:12px;text-align:center;margin-bottom:8px;min-height:16px"></div>
-      <button class="done-btn marked" id="obSaveBtn" onclick="saveOnboarding()">Profil speichern & loslegen 🚀</button>
+      
+      <!-- Absende-Button -->
+      <button class="auth-btn auth-btn-primary" id="authSubmitBtn" onclick="handleAuth()">Einloggen</button>
+      
+      <!-- Fehlermeldungen / Erfolgsmeldungen -->
+      <div id="authMsg" class="auth-error"></div>
     </div>
   </div>
-</div>
 
-<!-- APP -->
-<div class="nav" id="appNav" style="display:none">
-  <span class="nav-brand">💪 Trainer</span>
-  <div class="nav-divider"></div>
-  <div class="nav-scroll">
-    <button class="nav-btn on" onclick="showPage('today')">Heute</button>
-    <button class="nav-btn" onclick="showPage('week')">Woche</button>
-    <button class="nav-btn" onclick="showPage('stats')">Stats</button>
-    <button class="nav-btn" onclick="showPage('log')">Verlauf</button>
-    <button class="nav-btn" onclick="showPage('plan')">Plan</button>
-    <button class="nav-btn" onclick="showPage('settings')">Einst.</button>
+  <!-- ==========================================================================
+       ONBOARDING (Ersteinrichtung nach der ersten Registrierung)
+       ========================================================================== -->
+  <div class="onboard-overlay" id="onboardOverlay">
+    <div class="onboard-box">
+      <!-- Fortschritts-Punkte -->
+      <div class="step-dots">
+        <div class="step-dot on" id="dot0"></div>
+        <div class="step-dot" id="dot1"></div>
+      </div>
+      
+      <!-- Schritt 1: Name & Körperdaten -->
+      <div class="onboard-step on" id="obStep0">
+        <div style="font-size:26px;text-align:center;margin-bottom:8px">👋</div>
+        <h2 style="font-size:18px;font-weight:700;text-align:center;margin-bottom:6px">Willkommen!</h2>
+        <p style="font-size:12px;color:var(--muted2);text-align:center;margin-bottom:20px">Lass uns dein Profil einrichten – dauert 30 Sekunden.</p>
+        
+        <span class="ob-label">Dein Name</span>
+        <input class="ob-input" type="text" id="obName" placeholder="Vorname" style="margin-bottom:14px">
+        
+        <div class="ob-field-row">
+          <div class="ob-field">
+            <span class="ob-label">Größe (cm)</span>
+            <input class="ob-input" type="number" inputmode="numeric" id="obHeight" placeholder="180" onfocus="this.select()">
+          </div>
+          <div class="ob-field">
+            <span class="ob-label">Gewicht (kg)</span>
+            <input class="ob-input" type="number" inputmode="decimal" id="obWeight" placeholder="75" onfocus="this.select()">
+          </div>
+        </div>
+        
+        <span class="ob-label">Alter</span>
+        <input class="ob-input" type="number" inputmode="numeric" id="obAge" placeholder="25" style="margin-bottom:20px" onfocus="this.select()">
+        
+        <button class="done-btn marked" onclick="obNext()">Weiter →</button>
+      </div>
+      
+      <!-- Schritt 2: Trainingsziel wählen -->
+      <div class="onboard-step" id="obStep1">
+        <div style="font-size:26px;text-align:center;margin-bottom:8px">🎯</div>
+        <h2 style="font-size:18px;font-weight:700;text-align:center;margin-bottom:6px">Dein Ziel</h2>
+        <p style="font-size:12px;color:var(--muted2);text-align:center;margin-bottom:16px">Was willst du hauptsächlich erreichen?</p>
+        
+        <div class="goal-grid">
+          <div class="goal-card sel" data-val="hybrid" onclick="selectGoal(this)">
+            <div class="goal-card-icon">⚡</div>
+            <div class="goal-card-label">Hybrid-Athlet</div>
+            <div class="goal-card-sub">Kraft + Ausdauer</div>
+          </div>
+          <div class="goal-card" data-val="muscle" onclick="selectGoal(this)">
+            <div class="goal-card-icon">💪</div>
+            <div class="goal-card-label">Muskelaufbau</div>
+            <div class="goal-card-sub">Hypertrophie</div>
+          </div>
+          <div class="goal-card" data-val="fatloss" onclick="selectGoal(this)">
+            <div class="goal-card-icon">🔥</div>
+            <div class="goal-card-label">Gewichtsverlust</div>
+            <div class="goal-card-sub">Straffung & Fett</div>
+          </div>
+          <div class="goal-card" data-val="health" onclick="selectGoal(this)">
+            <div class="goal-card-icon">🧘</div>
+            <div class="goal-card-label">Gesundheit</div>
+            <div class="goal-card-sub">Mobility & Fitness</div>
+          </div>
+        </div>
+        
+        <div id="obSaveError" style="color:var(--danger);font-size:12px;text-align:center;margin-bottom:8px;min-height:16px"></div>
+        <button class="done-btn marked" id="obSaveBtn" onclick="saveOnboarding()">Profil speichern & loslegen 🚀</button>
+      </div>
+    </div>
   </div>
-  <div class="nav-avatar" id="navAvatar" onclick="showPage('settings')" title="Profil"></div>
-</div>
 
-<div id="today" class="page on" style="display:none"></div>
-<div id="week" class="page" style="display:none"></div>
-<div id="stats" class="page" style="display:none"></div>
-<div id="log" class="page" style="display:none"></div>
-<div id="plan" class="page" style="display:none"></div>
-<div id="settings" class="page" style="display:none"></div>
-<div class="toast" id="toast"></div>
-<input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-
-<script>
-// ════════════════════════════════════════════════════
-//  SUPABASE — FIX: korrekte Initialisierung mit createClient
-// ════════════════════════════════════════════════════
-const SUPABASE_URL = 'https://lrjkmjkwxbdyjdbmvqul.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxyamttamt3eGJkeWpkYm12cXVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2MzU1NjEsImV4cCI6MjA5ODIxMTU2MX0.YGVLXtBWGtnhnU81EjcA9WkfhPINMVU0UJds61UwsvE';
-// FIX: window.supabase ist das CDN-Objekt; daraus createClient destrukturieren
-const { createClient } = window.supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let currentUser = null;
-let userProfile = null;
-
-// ════════════════════════════════════════════════════
-//  AUTH FLOW
-// ════════════════════════════════════════════════════
-let authMode = 'login';
-
-function switchAuthTab(mode, btn) {
-  authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('on'));
-  btn.classList.add('on');
-  const isReg = mode === 'register';
-  document.getElementById('authConfirmWrap').style.display = isReg ? 'block' : 'none';
-  document.getElementById('authSubmitBtn').textContent = isReg ? 'Account erstellen' : 'Einloggen';
-  document.getElementById('authMsg').textContent = '';
-  document.getElementById('authMsg').className = 'auth-error';
-}
-
-async function handleAuth() {
-  const email    = document.getElementById('authEmail').value.trim();
-  const password = document.getElementById('authPassword').value;
-  const msgEl    = document.getElementById('authMsg');
-  const btn      = document.getElementById('authSubmitBtn');
-
-  if (!email || !password) { msgEl.textContent = 'Bitte E-Mail und Passwort eingeben.'; return; }
-
-  btn.disabled = true;
-  btn.textContent = '…';
-  msgEl.textContent = '';
-
-  if (authMode === 'register') {
-    const confirm = document.getElementById('authConfirm').value;
-    if (password !== confirm) {
-      msgEl.textContent = 'Passwörter stimmen nicht überein.';
-      btn.disabled = false; btn.textContent = 'Account erstellen'; return;
-    }
-    if (password.length < 6) {
-      msgEl.textContent = 'Passwort muss mindestens 6 Zeichen haben.';
-      btn.disabled = false; btn.textContent = 'Account erstellen'; return;
-    }
-    const { data, error } = await db.auth.signUp({ email, password });
-    if (error) {
-      msgEl.textContent = error.message;
-      btn.disabled = false; btn.textContent = 'Account erstellen';
-    } else {
-      msgEl.className = 'auth-success';
-      msgEl.textContent = '✓ Account erstellt! Bitte E-Mail bestätigen, dann einloggen.';
-      btn.disabled = false; btn.textContent = 'Account erstellen';
-    }
-  } else {
-    const { data, error } = await db.auth.signInWithPassword({ email, password });
-    if (error) {
-      msgEl.textContent = translateAuthError(error.message);
-      btn.disabled = false; btn.textContent = 'Einloggen';
-    } else {
-      currentUser = data.user;
-      hideAuthOverlay();
-      await checkProfile();
-    }
-  }
-}
-
-function translateAuthError(msg) {
-  if (msg.includes('Invalid login')) return 'E-Mail oder Passwort falsch.';
-  if (msg.includes('Email not confirmed')) return 'Bitte E-Mail zuerst bestätigen.';
-  if (msg.includes('User already registered')) return 'Diese E-Mail ist bereits registriert.';
-  return msg;
-}
-
-function hideAuthOverlay() {
-  const overlay = document.getElementById('authOverlay');
-  overlay.style.opacity = '0';
-  overlay.style.transition = 'opacity .3s';
-  setTimeout(() => overlay.style.display = 'none', 300);
-}
-
-async function handleLogout() {
-  await db.auth.signOut();
-  currentUser = null; userProfile = null;
-  document.getElementById('appNav').style.display = 'none';
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  const overlay = document.getElementById('authOverlay');
-  overlay.style.display = 'flex';
-  overlay.style.opacity = '1';
-  document.getElementById('authEmail').value = '';
-  document.getElementById('authPassword').value = '';
-  document.getElementById('authMsg').textContent = '';
-  document.getElementById('authSubmitBtn').disabled = false;
-  document.getElementById('authSubmitBtn').textContent = 'Einloggen';
-}
-
-// ════════════════════════════════════════════════════
-//  SESSION CHECK ON LOAD
-// ════════════════════════════════════════════════════
-async function checkSession() {
-  const { data: { session } } = await db.auth.getSession();
-  if (session) {
-    currentUser = session.user;
-    hideAuthOverlay();
-    await checkProfile();
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  PROFILE & ONBOARDING
-// ════════════════════════════════════════════════════
-async function checkProfile() {
-  const { data, error } = await db
-    .from('profiles')
-    .select('*')
-    .eq('id', currentUser.id)
-    .single();
-
-  if (error && error.code === 'PGRST116') {
-    // Kein Profil → Onboarding zeigen
-    document.getElementById('onboardOverlay').style.display = 'flex';
-  } else if (data) {
-    userProfile = data;
-    launchApp();
-  } else {
-    // Anderer Fehler – trotzdem App starten (graceful fallback)
-    console.error('Profile fetch error:', error);
-    launchApp();
-  }
-}
-
-function launchApp() {
-  document.getElementById('onboardOverlay').style.display = 'none';
-  document.getElementById('appNav').style.display = 'flex';
-  document.querySelectorAll('.page').forEach(p => p.style.removeProperty('display'));
-
-  // Avatar initialen setzen
-  const name = userProfile?.username || currentUser?.email?.split('@')[0] || '?';
-  document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
-
-  renderToday();
-}
-
-// ── Onboarding Steps ──────────────────────────────
-let obGoal = 'hybrid';
-let obCurrentStep = 0;
-
-function selectGoal(el) {
-  document.querySelectorAll('.goal-card').forEach(c => c.classList.remove('sel'));
-  el.classList.add('sel');
-  obGoal = el.dataset.val;
-}
-
-function obNext() {
-  const name   = document.getElementById('obName').value.trim();
-  const height = document.getElementById('obHeight').value;
-  const weight = document.getElementById('obWeight').value;
-  const age    = document.getElementById('obAge').value;
-  if (!name || !height || !weight) { toast('Bitte Name, Größe und Gewicht ausfüllen'); return; }
-  obCurrentStep = 1;
-  document.getElementById('obStep0').classList.remove('on');
-  document.getElementById('obStep1').classList.add('on');
-  document.getElementById('dot0').classList.remove('on');
-  document.getElementById('dot1').classList.add('on');
-}
-
-async function saveOnboarding() {
-  const name   = document.getElementById('obName').value.trim();
-  const height = parseFloat(document.getElementById('obHeight').value);
-  const weight = parseFloat(document.getElementById('obWeight').value);
-  const age    = parseInt(document.getElementById('obAge').value) || null;
-  const tag    = '#' + Math.floor(1000 + Math.random() * 9000);
-  const btn    = document.getElementById('obSaveBtn');
-  const errEl  = document.getElementById('obSaveError');
-
-  btn.disabled = true; btn.textContent = 'Speichern…';
-
-  const { data, error } = await db.from('profiles').insert([{
-    id: currentUser.id,
-    username: name,
-    tag,
-    height,
-    weight,
-    age,
-    goal: obGoal
-  }]).select().single();
-
-  if (error) {
-    errEl.textContent = 'Fehler: ' + error.message;
-    btn.disabled = false; btn.textContent = 'Profil speichern & loslegen 🚀';
-  } else {
-    userProfile = data;
-    toast(`Willkommen, ${name}${tag}! 🎉`);
-    launchApp();
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  SMART CALCULATIONS (aus Profildaten)
-// ════════════════════════════════════════════════════
-function calcUserStats(profile) {
-  if (!profile) return null;
-  const { height, weight, age, goal } = profile;
-  const h = parseFloat(height), w = parseFloat(weight), a = parseInt(age) || 25;
-  if (!h || !w) return null;
-
-  // BMR (Mifflin-St Jeor, männlich als Standard – da kein Geschlecht erfragt)
-  const bmr = 10 * w + 6.25 * h - 5 * a + 5;
-  // Aktivitätsfaktor: Gym + Laufen 4–5x/Woche = 1.55
-  const tdee = Math.round(bmr * 1.55);
-
-  const goalCalories = {
-    muscle:  tdee + 300,
-    fatloss: tdee - 400,
-    hybrid:  tdee + 100,
-    health:  tdee
-  };
-  const calories = goalCalories[goal] || tdee;
-
-  // Wasserbedarf: 35ml/kg + 500ml für Training
-  const water = Math.round((w * 35 + 500) / 100) / 10; // in Liter
-
-  // Protein: goal-abhängig
-  const proteinG = {
-    muscle:  Math.round(w * 2.2),
-    fatloss: Math.round(w * 2.0),
-    hybrid:  Math.round(w * 1.8),
-    health:  Math.round(w * 1.6)
-  };
-  const protein = proteinG[goal] || Math.round(w * 1.8);
-
-  // Schritte
-  const steps = goal === 'fatloss' ? 10000 : goal === 'health' ? 8000 : 7500;
-
-  return { calories, water, protein, steps, tdee };
-}
-
-// ════════════════════════════════════════════════════
-//  LOCAL STORAGE (Workout-Daten bleiben lokal)
-// ════════════════════════════════════════════════════
-const S = {
-  get: (k, d) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch(e) { return d; } },
-  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} },
-};
-
-// ISO-8601 konforme Wochenberechnung
-function getWeekKey(offset = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset * 7);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getFullYear()}-W${String(weekNo).padStart(2, '0')}`;
-}
-function wkKey(di, wk)   { return `wk_${wk}_${di}`; }
-function doneKey(di, wk) { return `done_${wk}_${di}`; }
-
-let weekOffset = 0;
-const todayIdx = (new Date().getDay() + 6) % 7;
-let selectedDayIdx = todayIdx;
-
-// ════════════════════════════════════════════════════
-//  PLAN DATA
-// ════════════════════════════════════════════════════
-const PLAN = [
-  { label:"Mo", type:"Upper A", badge:"upper", sub:"Brust · Schultern · Rücken · Arme", icon:"🏋️",
-    exercises:[
-      {name:"Bankdrücken",          target:"4×6–8",      note:"Kraft-Fokus – schwer & kontrolliert"},
-      {name:"Klimmzüge / Lat Pull", target:"4×8–10",     note:"Breiter Rücken = aufrechte Laufhaltung"},
-      {name:"Schulterdrücken (KH)", target:"3×10–12",    note:""},
-      {name:"Rudern Kabelzug eng",  target:"3×10–12",    note:"Mittlerer Rücken"},
-      {name:"Trizeps Pushdown",     target:"3×12",       note:""},
-      {name:"Bizeps Curl",          target:"3×12",       note:""},
-      {name:"Plank",                target:"3×45 Sek",   note:"Core für Laufhaltung"}
-    ]},
-  { label:"Di", type:"Laufen", badge:"run", sub:"Grundlage · 5–7 km", icon:"🏃", run:true },
-  { label:"Mi", type:"Lower A", badge:"lower", sub:"Knie-dominiert · Quad-Fokus", icon:"🏋️",
-    exercises:[
-      {name:"Kniebeuge",             target:"4×6–8",     note:"Hauptübung – tief & kontrolliert"},
-      {name:"Bulg. Kniebeuge",       target:"3×10/Seite",note:"Einbeinige Stabilität = laufrelevant"},
-      {name:"Leg Press",             target:"3×12",      note:"Zusatzvolumen Oberschenkel"},
-      {name:"Nordic Curl",           target:"3×6–8",     note:"Schutz gegen Hamstring-Verletzung"},
-      {name:"Wadenheben stehend",    target:"4×15",      note:"Laufkraft Waden-Achillessehne"},
-      {name:"Dead Bug",              target:"3×8/Seite", note:"Core-Antirotation"}
-    ]},
-  { label:"Do", type:"Upper B", badge:"upper", sub:"Schultern · Rücken · Arme", icon:"🏋️",
-    exercises:[
-      {name:"Schrägbank KH",         target:"3×10–12",   note:"Andere Winkel = mehr Brust"},
-      {name:"Rudern LH vorgebeugt",  target:"4×8–10",    note:"Stärkster Rückenaufbau"},
-      {name:"Seitheben KH",          target:"3×15",      note:"Schulterbreite aufbauen"},
-      {name:"Kabelrudern weit",      target:"3×12",      note:"Oberer Rücken für Laufhaltung"},
-      {name:"Hammer Curl",           target:"3×12",      note:""},
-      {name:"Overhead Trizeps",      target:"3×12",      note:""},
-      {name:"Seitstütz",             target:"3×30 Sek",  note:"Laterale Core-Stabilität"}
-    ]},
-  { label:"Fr", type:"Laufen Intervalle", badge:"run", sub:"Schnelligkeit · Pace", icon:"⚡", run:true, interval:true },
-  { label:"Sa", type:"Lower B", badge:"lower", sub:"Hüft-dominiert · Lauf-Fokus", icon:"🏋️",
-    exercises:[
-      {name:"Rumän. Kreuzheben",     target:"4×8–10",    note:"Hintere Kette = Laufantrieb"},
-      {name:"Hip Thrust",            target:"4×12–15",   note:"Glutes = wichtigster Laufmotor"},
-      {name:"Ausfallschritte",       target:"3×12/Seite",note:"Laufspezifische Einbeinbewegung"},
-      {name:"Leg Curl",              target:"3×12",      note:"Ischiokrurale direkt stärken"},
-      {name:"Wadenheben sitzend",    target:"4×20",      note:"Soleus = Laufen bergauf"},
-      {name:"Pallof Press",          target:"3×10/Seite",note:"Rotationsstabilität"}
-    ]},
-  { label:"So", type:"Mobility + Pause", badge:"mob", sub:"Regeneration", icon:"🧘",
-    mobility:[
-      {name:"Hüftöffner (Tauben-Pose)",  meta:"2×60 Sek/Seite"},
-      {name:"Ischiokrurale Dehnung",     meta:"2×45 Sek/Seite"},
-      {name:"Wadendehnung",             meta:"2×45 Sek/Seite"},
-      {name:"Thorakale Mobilisation",   meta:"2×10 Wdh"},
-      {name:"Foam Rolling",             meta:"10–15 Min"},
-      {name:"Spaziergang optional",     meta:"30–60 Min"}
-    ]}
-];
-
-// ════════════════════════════════════════════════════
-//  PACE CALC
-// ════════════════════════════════════════════════════
-function calcPace(distKm, timeMins) {
-  if (!distKm || !timeMins || distKm <= 0 || timeMins <= 0) return null;
-  const dec = timeMins / distKm;
-  return { str: `${Math.floor(dec)}:${String(Math.round((dec % 1) * 60)).padStart(2,'0')}`, decimal: dec };
-}
-function paceCategory(dec) {
-  if (!dec) return { label:'–', pct:0 };
-  if (dec <= 4)   return { label:'Sehr schnell', pct:95 };
-  if (dec <= 4.5) return { label:'Schnell',      pct:80 };
-  if (dec <= 5)   return { label:'Gut',           pct:65 };
-  if (dec <= 5.5) return { label:'Flott',         pct:55 };
-  if (dec <= 6)   return { label:'Moderat',       pct:45 };
-  if (dec <= 6.5) return { label:'Gemütlich',     pct:35 };
-  if (dec <= 7.5) return { label:'Locker',        pct:25 };
-  return { label:'Spazieren', pct:15 };
-}
-
-// ════════════════════════════════════════════════════
-//  TOAST & PHASE
-// ════════════════════════════════════════════════════
-let toastTimer;
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
-}
-
-function getPhase() {
-  let st = S.get('start_ts', null);
-  if (!st) { st = Date.now(); S.set('start_ts', st); }
-  const w = Math.floor((Date.now() - st) / (7 * 86400000));
-  if (w < 2) return { n:'Woche 1–2', desc:'Einstieg & Fundament', tip:'Technik vor Last. Konsistenz > Intensität.' };
-  if (w < 4) return { n:'Woche 3–4', desc:'Aufbau',               tip:'Gewichte +5–10%. Laufdistanz auf 7 km.' };
-  return       { n:'Woche 5',   desc:'Deload & Test',         tip:'Volumen –30%. 5km-Zeit testen!' };
-}
-
-// ════════════════════════════════════════════════════
-//  PAGE ROUTER
-// ════════════════════════════════════════════════════
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
-  const labels = { today:'Heute', week:'Woche', stats:'Stats', log:'Verlauf', plan:'Plan', settings:'Einst.' };
-  document.querySelectorAll('.nav-btn').forEach(b => { if (b.textContent.trim() === labels[id]) b.classList.add('on'); });
-  ({ today:renderToday, week:renderWeek, stats:renderStats, log:renderLog, plan:renderPlanPage, settings:renderSettings })[id]?.();
-}
-
-// ════════════════════════════════════════════════════
-//  TODAY PAGE
-// ════════════════════════════════════════════════════
-function renderToday() {
-  const wk    = getWeekKey();
-  const day   = PLAN[selectedDayIdx];
-  const done  = S.get(doneKey(selectedDayIdx, wk), false);
-  const saved = S.get(wkKey(selectedDayIdx, wk), {});
-  const phase = getPhase();
-  const stats = calcUserStats(userProfile);
-  const colors = { upper:'var(--upper)', lower:'var(--lower)', run:'var(--run)', mob:'var(--mob)' };
-
-  // Mini week grid
-  const miniGrid = PLAN.map((d, i) => {
-    const isDone = S.get(doneKey(i, wk), false);
-    return `<div class="wday${isDone?' done':''}${i===selectedDayIdx?' selected':''}${i===todayIdx&&selectedDayIdx!==i?' today':''}" onclick="selectedDayIdx=${i};renderToday()">
-      <div class="wday-label">${d.label}</div>
-      <div class="wday-type" style="color:${colors[d.badge]}">${d.type.split(' ')[0]}</div>
-      <div class="wday-dot"></div>
-    </div>`;
-  }).join('');
-
-  // Progress ring
-  let pct = 0, doneCount = 0, total = 0;
-  if (day.exercises) {
-    total = day.exercises.length;
-    doneCount = day.exercises.filter((_, j) => saved[j]?.kg || saved[j]?.reps).length;
-    pct = total > 0 ? Math.round(doneCount / total * 100) : 0;
-  } else if (day.mobility) {
-    total = day.mobility.length;
-    const mc = S.get(wkKey(selectedDayIdx, wk) + '_mob', {});
-    doneCount = Object.keys(mc).length;
-    pct = total > 0 ? Math.round(doneCount / total * 100) : 0;
-  } else if (day.run) {
-    pct = saved.run?.dist ? 100 : 0;
-  }
-
-  const r = 36, circ = 2 * Math.PI * r, fill = circ * (1 - pct / 100);
-  const ringColor = done ? 'var(--run)' : pct > 0 ? 'var(--upper)' : 'var(--border2)';
-
-  let bodyHTML = '';
-  if (day.run) bodyHTML = renderRunFields(selectedDayIdx, wk, saved, day.interval);
-  else if (day.mobility) {
-    const mc = S.get(wkKey(selectedDayIdx, wk) + '_mob', {});
-    bodyHTML = `<div class="mob-list">${day.mobility.map((m, i) => `
-      <div class="mob-item${mc[i] ? ' checked' : ''}" onclick="toggleMob(${selectedDayIdx},${i})">
-        <div class="mob-check">${mc[i] ? '✓' : ''}</div>
-        <div><div class="mob-name">${m.name}</div><div class="mob-meta">${m.meta}</div></div>
-      </div>`).join('')}</div>`;
-  } else if (day.exercises) {
-    bodyHTML = renderExerciseTable(selectedDayIdx, wk, saved, day.exercises);
-  }
-
-  // Dashboard widgets (wenn Profildaten vorhanden)
-  const widgetsHTML = stats ? renderDashboardWidgets(stats) : '';
-
-  // Profile banner
-  const profBanner = userProfile ? `
-    <div class="profile-banner">
-      <div class="profile-avatar">${(userProfile.username||'?').charAt(0).toUpperCase()}</div>
-      <div>
-        <div style="font-size:14px;font-weight:600">${userProfile.username}${userProfile.tag||''}</div>
-        <div style="font-size:11px;color:var(--muted2)">Ziel: ${{hybrid:'Hybrid-Athlet',muscle:'Muskelaufbau',fatloss:'Gewichtsverlust',health:'Gesundheit'}[userProfile.goal]||userProfile.goal}</div>
-      </div>
-    </div>` : '';
-
-  document.getElementById('today').innerHTML = `
-    ${profBanner}
-    <div class="phase-banner">
-      <span class="phase-icon">📈</span>
-      <div><div class="phase-text">${phase.n}: ${phase.desc}</div><div class="phase-sub">${phase.tip}</div></div>
+  <!-- ==========================================================================
+       HAUPT-APPLIKATION (Menünavigation)
+       ========================================================================== -->
+  <nav class="nav" id="appNav" style="display:none">
+    <span class="nav-brand">💪 Trainer</span>
+    <div class="nav-divider"></div>
+    <div class="nav-scroll">
+      <button class="nav-btn on" data-page="today"    onclick="showPage('today')">🏠 Heute</button>
+      <button class="nav-btn"    data-page="week"     onclick="showPage('week')">📅 Woche</button>
+      <button class="nav-btn"    data-page="body"     onclick="showPage('body')">⚖️ Körper</button>
+      <button class="nav-btn"    data-page="stats"    onclick="showPage('stats')">📊 Stats</button>
+      <button class="nav-btn"    data-page="log"      onclick="showPage('log')">📋 Verlauf</button>
+      <button class="nav-btn"    data-page="plan"     onclick="showPage('plan')">🗓 Plan</button>
+      <button class="nav-btn"    data-page="settings" onclick="showPage('settings')">⚙️ Einst.</button>
     </div>
-    ${widgetsHTML}
-    <div class="slabel">Diese Woche</div>
-    <div class="week-grid">${miniGrid}</div>
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">
-          <span>${day.icon}</span><span>${day.type}</span>
-          <span class="badge b-${day.badge}">${{upper:'Oberkörper',lower:'Unterkörper',run:'Laufen',mob:'Mobility'}[day.badge]}</span>
-        </div>
-        <div class="ring-wrap">
-          <svg width="80" height="80" viewBox="0 0 80 80">
-            <circle cx="40" cy="40" r="${r}" fill="none" stroke="var(--bg4)" stroke-width="6"/>
-            <circle cx="40" cy="40" r="${r}" fill="none" stroke="${ringColor}" stroke-width="6"
-              stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${fill.toFixed(2)}" stroke-linecap="round"/>
-          </svg>
-          <div class="ring-center"><div class="ring-n">${pct}%</div><div class="ring-l">${day.run?'Bereit':doneCount+'/'+total}</div></div>
-        </div>
-      </div>
-      <div style="font-size:11px;color:var(--muted2);margin-bottom:14px;font-weight:500">${day.sub}</div>
-      ${bodyHTML}
-      <button class="done-btn${done?' marked':''}" onclick="toggleDone(${selectedDayIdx})">
-        ${done ? '✓ Einheit abgeschlossen' : 'Als abgeschlossen markieren'}
-      </button>
+    <div class="nav-right">
+      <!-- Sync-Statuspunkt und Profilbild-Avatar -->
+      <div class="sync-dot" id="syncDot" title="Sync"></div>
+      <div class="nav-avatar" id="navAvatar" onclick="showPage('settings')" title="Profil"></div>
     </div>
-    ${renderPrevValues(selectedDayIdx)}`;
-}
+  </nav>
 
-// ── Dashboard Widgets ─────────────────────────────
-function renderDashboardWidgets(stats) {
-  const today = new Date().toDateString();
-  const wd = S.get('widget_day_' + today, { water: 0, steps: 0, calories: 0 });
+  <!-- ==========================================================================
+       SEITEN-CONTAINER (Die Inhalte werden dynamisch via JS befüllt)
+       ========================================================================== -->
+  <!-- 🏠 Heute Seite -->
+  <div id="today" class="page on" style="display:none"></div>
+  
+  <!-- 📅 Woche Seite -->
+  <div id="week" class="page" style="display:none"></div>
+  
+  <!-- ⚖️ Körper Seite -->
+  <div id="body" class="page" style="display:none"></div>
+  
+  <!-- 📊 Stats Seite -->
+  <div id="stats" class="page" style="display:none"></div>
+  
+  <!-- 📋 Verlauf Seite -->
+  <div id="log" class="page" style="display:none"></div>
+  
+  <!-- 🗓 Plan Seite -->
+  <div id="plan" class="page" style="display:none"></div>
+  
+  <!-- ⚙️ Einstellungen Seite -->
+  <div id="settings" class="page" style="display:none"></div>
 
-  const waterPct  = Math.min(100, Math.round(wd.water  / stats.water  * 100));
-  const stepsPct  = Math.min(100, Math.round(wd.steps  / stats.steps  * 100));
-  const calPct    = Math.min(100, Math.round(wd.calories / stats.calories * 100));
+  <!-- Toast-Benachrichtigung und versteckter Datei-Import-Input -->
+  <div class="toast" id="toast"></div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
 
-  return `
-    <div class="slabel">Tages-Dashboard</div>
-    <div class="widget-grid">
-      <div class="widget">
-        <div class="widget-label">💧 Wasser</div>
-        <div class="widget-val">${wd.water.toFixed(1)}<span style="font-size:14px;font-weight:500;color:var(--muted2)"> / ${stats.water}L</span></div>
-        <div class="widget-bar"><div class="widget-bar-fill" style="width:${waterPct}%;background:var(--upper)"></div></div>
-        <div class="widget-input-row">
-          <button class="widget-add-btn" onclick="addWidget('water',0.25)">+0.25L</button>
-          <button class="widget-add-btn" onclick="addWidget('water',0.5)">+0.5L</button>
-        </div>
-      </div>
-      <div class="widget">
-        <div class="widget-label">👟 Schritte</div>
-        <div class="widget-val">${wd.steps.toLocaleString('de')}<span style="font-size:11px;font-weight:500;color:var(--muted2)"> / ${stats.steps.toLocaleString('de')}</span></div>
-        <div class="widget-bar"><div class="widget-bar-fill" style="width:${stepsPct}%;background:var(--run)"></div></div>
-        <div class="widget-input-row">
-          <input class="widget-input" type="number" inputmode="numeric" placeholder="Schritte" onfocus="this.select()" id="stepsInput">
-          <button class="widget-add-btn" onclick="setWidget('steps',document.getElementById('stepsInput').value)">✓</button>
-        </div>
-      </div>
-    </div>
-    <div class="calcs-grid">
-      <div class="calc-card">
-        <div class="calc-n" style="color:var(--mob)">${stats.calories}</div>
-        <div class="calc-l">🔥 Kalorien-Ziel</div>
-      </div>
-      <div class="calc-card">
-        <div class="calc-n" style="color:var(--run)">${stats.protein}g</div>
-        <div class="calc-l">🥩 Protein-Ziel</div>
-      </div>
-    </div>`;
-}
-
-function addWidget(field, val) {
-  const today = new Date().toDateString();
-  const key = 'widget_day_' + today;
-  const wd = S.get(key, { water: 0, steps: 0, calories: 0 });
-  wd[field] = Math.round((wd[field] + val) * 100) / 100;
-  S.set(key, wd);
-  renderToday();
-}
-
-function setWidget(field, val) {
-  const today = new Date().toDateString();
-  const key = 'widget_day_' + today;
-  const wd = S.get(key, { water: 0, steps: 0, calories: 0 });
-  wd[field] = parseFloat(val) || 0;
-  S.set(key, wd);
-  renderToday();
-}
-
-// ── Exercise Table with Suggestions ──────────────
-function renderExerciseTable(dayIdx, wk, saved, exercises) {
-  const prevWk = getWeekKey(-1);
-  const prevSaved = S.get(wkKey(dayIdx, prevWk), {});
-
-  return `<div class="ex-wrap"><table class="ex-table">
-    <thead><tr><th style="width:42%">Übung</th><th>Kg</th><th>Wdh</th><th>Sätze</th></tr></thead>
-    <tbody>${exercises.map((ex, j) => {
-      const s = saved[j] || {};
-      const p = prevSaved[j] || {};
-      const suggestText = p.kg && !s.kg ? `<div class="ex-suggest">💡 Vorwoche: ${p.kg}kg × ${p.reps||'?'}</div>` : '';
-      return `<tr>
-        <td>
-          <div class="ex-name">${ex.name}</div>
-          <div class="ex-target">${ex.target}</div>
-          ${ex.note ? `<div class="ex-note">${ex.note}</div>` : ''}
-          ${suggestText}
-        </td>
-        <td><input class="val${s.kg?' has-val':''}" type="number" inputmode="decimal"
-          placeholder="${p.kg || '—'}" value="${s.kg || ''}"
-          onfocus="this.select()"
-          oninput="saveEx(${dayIdx},${j},'kg',this.value)"></td>
-        <td><input class="val${s.reps?' has-val':''}" type="number" inputmode="numeric"
-          placeholder="${p.reps || '—'}" value="${s.reps || ''}"
-          onfocus="this.select()"
-          oninput="saveEx(${dayIdx},${j},'reps',this.value)"></td>
-        <td><input class="val${s.sets?' has-val':''}" type="number" inputmode="numeric"
-          placeholder="${p.sets || '—'}" value="${s.sets || ''}"
-          onfocus="this.select()"
-          oninput="saveEx(${dayIdx},${j},'sets',this.value)"></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
-}
-
-// ── Run Fields ────────────────────────────────────
-function renderRunFields(dayIdx, wk, saved, isInterval) {
-  const rd  = saved.run || {};
-  const pace = calcPace(parseFloat(rd.dist), parseFloat(rd.time));
-  const cat  = paceCategory(pace?.decimal);
-  const feelEmojis = ['😫','😔','😐','😊','🔥'];
-
-  const ivSection = isInterval ? `<div class="card-sm" style="margin-bottom:12px">
-    <div style="font-size:11px;color:var(--mob);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">⚡ Intervall-Plan</div>
-    <div style="font-size:12px;color:var(--muted2);line-height:1.7">
-      Warm-up 5 Min → <strong style="color:var(--text)">6–8× 2 Min schnell</strong> / 2 Min locker → Cool-down 10 Min<br>
-      <span style="color:var(--run)">Schnell = 80–85% HF · Locker = Traben</span>
-    </div>
-  </div>` : '';
-
-  return `${ivSection}
-    <div class="run-grid">
-      <div class="run-field">
-        <label>Distanz (km)</label>
-        <input type="number" step="0.1" inputmode="decimal" placeholder="5.0" value="${rd.dist||''}"
-          class="${rd.dist?'has-val':''}" id="run_dist_${dayIdx}"
-          onfocus="this.select()" oninput="saveRun(${dayIdx},'dist',this.value);updatePaceDisplay(${dayIdx})">
-      </div>
-      <div class="run-field">
-        <label>Zeit (min)</label>
-        <input type="number" step="1" inputmode="numeric" placeholder="30" value="${rd.time||''}"
-          class="${rd.time?'has-val':''}" id="run_time_${dayIdx}"
-          onfocus="this.select()" oninput="saveRun(${dayIdx},'time',this.value);updatePaceDisplay(${dayIdx})">
-      </div>
-      <div class="run-field">
-        <label>HF Ø (bpm)</label>
-        <input type="number" inputmode="numeric" placeholder="145" value="${rd.hr||''}"
-          class="${rd.hr?'has-val':''}" onfocus="this.select()" oninput="saveRun(${dayIdx},'hr',this.value)">
-      </div>
-    </div>
-    <div class="run-grid" style="grid-template-columns:1fr 1fr;margin-top:0">
-      <div class="run-field">
-        <label>Kalorien (kcal)</label>
-        <input type="number" inputmode="numeric" placeholder="300" value="${rd.kcal||''}"
-          class="${rd.kcal?'has-val':''}" onfocus="this.select()" oninput="saveRun(${dayIdx},'kcal',this.value)">
-      </div>
-      <div class="run-field">
-        <label>Höhenmeter (m)</label>
-        <input type="number" inputmode="numeric" placeholder="0" value="${rd.elev||''}"
-          class="${rd.elev?'has-val':''}" onfocus="this.select()" oninput="saveRun(${dayIdx},'elev',this.value)">
-      </div>
-    </div>
-    <div class="pace-display" id="pace_display_${dayIdx}">
-      <div class="pace-label">⚡ Automatische Pace</div>
-      <div class="pace-value" id="pace_val_${dayIdx}">${pace ? pace.str : '—:——'}</div>
-      <div class="pace-unit">min/km</div>
-      <div class="pace-bar-wrap">
-        <div class="pace-bar-label"><span>Langsam</span><span id="pace_cat_${dayIdx}">${cat.label}</span><span>Schnell</span></div>
-        <div class="pace-bar"><div class="pace-bar-fill" id="pace_fill_${dayIdx}" style="width:${cat.pct}%"></div></div>
-      </div>
-    </div>
-    <div style="margin-top:12px">
-      <div style="font-size:10px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Wie war die Einheit?</div>
-      <div class="feel-row">${feelEmojis.map((e, i) => `
-        <div class="feel-btn${rd.feel==i+1?' on':''}" onclick="saveRun(${dayIdx},'feel',${i+1});renderToday()">${e}</div>`).join('')}
-      </div>
-    </div>
-    <div class="card-sm" style="margin-top:12px">
-      <div style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Notizen</div>
-      <textarea style="width:100%;background:transparent;border:none;color:var(--muted2);font-size:13px;resize:none;outline:none;min-height:52px;font-family:var(--font);line-height:1.5"
-        placeholder="Wie lief's? Streckenbeschreibung..."
-        oninput="saveRun(${dayIdx},'notes',this.value)">${rd.notes||''}</textarea>
-    </div>`;
-}
-
-function updatePaceDisplay(dayIdx) {
-  const dist = parseFloat(document.getElementById('run_dist_' + dayIdx)?.value) || 0;
-  const time = parseFloat(document.getElementById('run_time_' + dayIdx)?.value) || 0;
-  const pace = calcPace(dist, time);
-  const cat  = paceCategory(pace?.decimal);
-  const pv   = document.getElementById('pace_val_'  + dayIdx);
-  const fill = document.getElementById('pace_fill_' + dayIdx);
-  const catEl = document.getElementById('pace_cat_' + dayIdx);
-  if (pv)    pv.textContent    = pace ? pace.str : '—:——';
-  if (fill)  fill.style.width  = cat.pct + '%';
-  if (catEl) catEl.textContent = cat.label;
-}
-
-// ── Prev Values + PR Detection ────────────────────
-function renderPrevValues(dayIdx) {
-  const prevWk = getWeekKey(-1);
-  const day    = PLAN[dayIdx];
-  const prev   = S.get(wkKey(dayIdx, prevWk), {});
-  const curr   = S.get(wkKey(dayIdx, getWeekKey()), {});
-
-  // All-time PR scan
-  const prMap = {};
-  for (let w = 0; w >= -20; w--) {
-    const d = S.get(wkKey(dayIdx, getWeekKey(w)), {});
-    day.exercises?.forEach((_, j) => {
-      const kg = parseFloat(d[j]?.kg);
-      if (kg && (!prMap[j] || kg > prMap[j])) prMap[j] = kg;
-    });
-  }
-
-  if (day.run) {
-    const pr = prev.run || {};
-    if (!pr.dist && !pr.time) return `<div class="empty">Noch keine Vorwochenwerte</div>`;
-    const pp = calcPace(parseFloat(pr.dist), parseFloat(pr.time));
-    const cp = calcPace(parseFloat(curr.run?.dist), parseFloat(curr.run?.time));
-    return `<div class="prev-header"><span class="prev-title">Vorwoche</span></div>
-      <div class="card-sm">
-        ${pr.dist ? `<div class="prev-row"><span class="prev-key">Distanz</span><span class="prev-val">${pr.dist} km</span></div>` : ''}
-        ${pr.time ? `<div class="prev-row"><span class="prev-key">Zeit</span><span class="prev-val">${pr.time} Min</span></div>` : ''}
-        ${pp ? `<div class="prev-row"><span class="prev-key">Pace</span><span class="prev-val">${pp.str} min/km${cp&&cp.decimal<pp.decimal?'<span class="pr-tag">schneller</span>':''}</span></div>` : ''}
-        ${pr.hr ? `<div class="prev-row"><span class="prev-key">HF Ø</span><span class="prev-val">${pr.hr} bpm</span></div>` : ''}
-      </div>`;
-  }
-  if (!day.exercises) return '';
-  const hasAny = day.exercises.some((_, j) => prev[j]?.kg || prev[j]?.reps);
-  if (!hasAny) return `<div class="empty">Noch keine Vorwochenwerte</div>`;
-  return `<div class="prev-header"><span class="prev-title">Vorwoche</span><span class="prev-badge">Vergleich</span></div>
-    <div class="card-sm">
-      ${day.exercises.map((ex, j) => {
-        const p = prev[j]; if (!p || (!p.kg && !p.reps)) return '';
-        const currKg = parseFloat(curr[j]?.kg);
-        const isPR   = currKg && currKg > (prMap[j] || 0) && currKg > parseFloat(p.kg || 0);
-        return `<div class="prev-row">
-          <span class="prev-key">${ex.name}</span>
-          <span class="prev-val">${p.kg?p.kg+' kg ':''} ${p.reps?'×'+p.reps:''} ${p.sets?p.sets+'S':''}${isPR?'<span class="pr-tag">PR</span>':''}</span>
-        </div>`;
-      }).join('')}
-    </div>`;
-}
-
-// ── Save helpers ──────────────────────────────────
-function saveEx(di, j, field, val) {
-  const wk = getWeekKey(), key = wkKey(di, wk), d = S.get(key, {});
-  if (!d[j]) d[j] = {};
-  d[j][field] = val;
-  S.set(key, d);
-}
-function saveRun(di, field, val) {
-  const wk = getWeekKey(), key = wkKey(di, wk), d = S.get(key, {});
-  if (!d.run) d.run = {};
-  d.run[field] = val;
-  S.set(key, d);
-}
-function toggleMob(di, i) {
-  const wk = getWeekKey(), key = wkKey(di, wk) + '_mob', d = S.get(key, {});
-  if (d[i]) delete d[i]; else d[i] = true;
-  S.set(key, d); renderToday();
-}
-function toggleDone(di) {
-  const wk = getWeekKey(), key = doneKey(di, wk), curr = S.get(key, false);
-  S.set(key, !curr);
-  toast(!curr ? '✓ Einheit abgeschlossen!' : 'Markierung entfernt');
-  renderToday();
-}
-
-// ════════════════════════════════════════════════════
-//  WEEK PAGE
-// ════════════════════════════════════════════════════
-function renderWeek() {
-  const wk       = getWeekKey(weekOffset);
-  const doneDays = PLAN.filter((_, i) => S.get(doneKey(i, wk), false));
-  const pct      = Math.round(doneDays.length / PLAN.length * 100);
-  const bgColors = { upper:'var(--upper-bg)', lower:'var(--lower-bg)', run:'var(--run-bg)', mob:'var(--mob-bg)' };
-
-  const cards = PLAN.map((day, i) => {
-    const done  = S.get(doneKey(i, wk), false);
-    const saved = S.get(wkKey(i, wk), {});
-    let detail = '';
-    if (day.run && saved.run?.dist) {
-      const p = calcPace(parseFloat(saved.run.dist), parseFloat(saved.run.time));
-      detail = `${saved.run.dist} km${p?' · '+p.str+' /km':''}${saved.run.feel?' · '+['😫','😔','😐','😊','🔥'][saved.run.feel-1]:''}`;
-    } else if (day.exercises) {
-      const f = day.exercises.filter((_, j) => saved[j]?.kg).length;
-      if (f) detail = `${f}/${day.exercises.length} Übungen`;
-    } else if (day.mobility) {
-      const mc = S.get(wkKey(i, wk) + '_mob', {});
-      const c = Object.keys(mc).length;
-      if (c) detail = `${c}/${day.mobility.length} erledigt`;
-    }
-    return `<div class="day-sum${done?' done-card':''}" onclick="selectedDayIdx=${i};showPage('today')">
-      <div class="day-icon" style="background:${bgColors[day.badge]}">${day.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14px;font-weight:600;margin-bottom:2px">${day.label} — ${day.type}</div>
-        <div style="font-size:11px;color:var(--muted2)">${detail||day.sub}</div>
-      </div>
-      ${done ? '<span style="font-size:11px;color:var(--run);font-weight:600">✓</span>' : i===todayIdx&&weekOffset===0?'<span style="font-size:10px;color:var(--upper);font-weight:700;border:1px solid var(--upper);padding:2px 7px;border-radius:10px">Heute</span>' : ''}
-    </div>`;
-  }).join('');
-
-  document.getElementById('week').innerHTML = `
-    <div class="week-sel">
-      <button class="week-nav" onclick="weekOffset--;renderWeek()">‹</button>
-      <span class="week-label">${weekOffset===0?'Diese Woche':weekOffset===-1?'Letzte Woche':`Vor ${-weekOffset} Wochen`}</span>
-      <button class="week-nav" onclick="weekOffset=Math.min(0,weekOffset+1);renderWeek()" ${weekOffset>=0?'disabled':''}>›</button>
-    </div>
-    <div class="card">
-      <div class="prog-wrap">
-        <div class="prog-lbl"><span>Wochenfortschritt</span><span>${doneDays.length}/${PLAN.length} · ${pct}%</span></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--run),var(--upper))"></div></div>
-      </div>
-    </div>
-    <div class="slabel">Einheiten</div>${cards}`;
-}
-
-// ════════════════════════════════════════════════════
-//  STATS PAGE
-// ════════════════════════════════════════════════════
-function renderStats() {
-  let totalSessions=0, totalKm=0, totalMin=0, bestPace=null, bestDist=0;
-  const weeklyData = [], prMap = {};
-
-  for (let w = 0; w >= -16; w--) {
-    const wk = getWeekKey(w);
-    let ws = 0;
-    PLAN.forEach((_, i) => { if (S.get(doneKey(i, wk), false)) { totalSessions++; ws++; } });
-    weeklyData.push(ws);
-    [1, 4].forEach(i => {
-      const d = S.get(wkKey(i, wk), {});
-      if (d.run?.dist) {
-        const km = parseFloat(d.run.dist)||0, min = parseFloat(d.run.time)||0;
-        totalKm += km; totalMin += min;
-        if (km > bestDist) bestDist = km;
-        const p = calcPace(km, min);
-        if (p && (!bestPace || p.decimal < bestPace.decimal)) bestPace = p;
-      }
-    });
-    PLAN.filter(d => !d.run && !d.mobility).forEach(day => {
-      const ri = PLAN.indexOf(day);
-      const sv = S.get(wkKey(ri, wk), {});
-      day.exercises?.forEach((ex, j) => {
-        const kg = parseFloat(sv[j]?.kg);
-        if (kg && (!prMap[ex.name] || kg > prMap[ex.name])) prMap[ex.name] = kg;
-      });
-    });
-  }
-
-  const last8    = weeklyData.reverse().slice(-8);
-  const maxW     = Math.max(...last8, 1);
-  const wkLabels = ['W-7','W-6','W-5','W-4','W-3','W-2','VW','DW'];
-  const barChart = last8.map((n, i) => `
-    <div class="bar-col">
-      <div class="bar-inner${n>0?' filled':''}" style="height:${Math.round(n/maxW*60)+8}px"></div>
-      <div class="bar-lbl">${wkLabels[i]||''}</div>
-    </div>`).join('');
-
-  const prEntries = Object.entries(prMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const maxKg     = prEntries[0]?.[1] || 100;
-  const avgPace   = calcPace(totalKm, totalMin);
-
-  document.getElementById('stats').innerHTML = `
-    <div class="slabel">Gesamt</div>
-    <div class="stats-big-grid">
-      <div class="stat-big"><div class="stat-big-n" style="color:var(--upper)">${totalSessions}</div><div class="stat-big-l">Einheiten</div><div class="stat-big-sub">letzte 16 Wochen</div></div>
-      <div class="stat-big"><div class="stat-big-n" style="color:var(--run)">${totalKm.toFixed(1)}</div><div class="stat-big-l">km gelaufen</div><div class="stat-big-sub">${bestDist?'Best: '+bestDist.toFixed(1)+' km':''}</div></div>
-      <div class="stat-big"><div class="stat-big-n" style="color:var(--mob)">${bestPace?bestPace.str:'—'}</div><div class="stat-big-l">Beste Pace</div><div class="stat-big-sub">${avgPace?'Ø '+avgPace.str+' /km':''}</div></div>
-      <div class="stat-big"><div class="stat-big-n" style="color:var(--lower)">${totalMin>0?(totalMin/60).toFixed(1):'—'}</div><div class="stat-big-l">Laufstunden</div><div class="stat-big-sub">${totalKm>0?'~'+Math.round(totalKm*70)+' kcal':''}</div></div>
-    </div>
-    <div class="slabel">Wochenaktivität</div>
-    <div class="card"><div class="chart-bars">${barChart}</div></div>
-    <div class="slabel">Persönliche Bestleistungen</div>
-    <div class="card">
-      ${prEntries.length ? prEntries.map(([name, kg]) => `
-        <div class="pr-item">
-          <div class="pr-name">${name}</div>
-          <div class="pr-bar-wrap"><div class="mini-bar"><div class="mini-fill" style="width:${Math.round(kg/maxKg*100)}%"></div></div></div>
-          <div class="pr-val">${kg} kg</div>
-        </div>`).join('') : '<div class="empty">Noch keine Gewichte eingetragen</div>'}
-    </div>`;
-}
-
-// ════════════════════════════════════════════════════
-//  LOG PAGE
-// ════════════════════════════════════════════════════
-function renderLog() {
-  let entries = [];
-  for (let w = 0; w >= -16; w--) {
-    const wk = getWeekKey(w);
-    PLAN.forEach((day, i) => {
-      if (S.get(doneKey(i, wk), false)) entries.push({ wk, w, day, i, saved: S.get(wkKey(i, wk), {}) });
-    });
-  }
-  entries.reverse();
-  if (!entries.length) { document.getElementById('log').innerHTML = '<div class="empty" style="margin-top:60px">📋<br><br>Noch keine abgeschlossenen Einheiten</div>'; return; }
-
-  document.getElementById('log').innerHTML = `<div class="slabel">Alle Einheiten</div>` + entries.map(e => {
-    const d = e.day, sv = e.saved; let rows = '';
-    if (d.run && sv.run) {
-      const r = sv.run, p = calcPace(parseFloat(r.dist), parseFloat(r.time));
-      rows = [
-        r.dist ? `<div class="log-row"><span class="log-key">Distanz</span><span class="log-val">${r.dist} km</span></div>` : '',
-        r.time ? `<div class="log-row"><span class="log-key">Zeit</span><span class="log-val">${r.time} Min</span></div>` : '',
-        p      ? `<div class="log-row"><span class="log-key">Pace</span><span class="log-val">${p.str} min/km</span></div>` : '',
-        r.hr   ? `<div class="log-row"><span class="log-key">HF Ø</span><span class="log-val">${r.hr} bpm</span></div>` : '',
-        r.feel ? `<div class="log-row"><span class="log-key">Gefühl</span><span class="log-val">${['😫','😔','😐','😊','🔥'][r.feel-1]}</span></div>` : '',
-        r.notes? `<div class="log-row" style="flex-direction:column;align-items:flex-start;gap:3px"><span class="log-key">Notizen</span><span style="font-size:12px;color:var(--muted2);margin-top:2px">${r.notes}</span></div>` : ''
-      ].join('');
-    } else if (d.exercises) {
-      rows = d.exercises.map((ex, j) => {
-        const s = sv[j]; if (!s || (!s.kg && !s.reps)) return '';
-        return `<div class="log-row"><span class="log-key">${ex.name}</span><span class="log-val">${s.kg?s.kg+' kg':''} ${s.reps?'×'+s.reps:''} ${s.sets?'('+s.sets+'S)':''}</span></div>`;
-      }).join('');
-    } else if (d.mobility) {
-      const mc = S.get(wkKey(e.i, e.wk) + '_mob', {});
-      const c = Object.keys(mc).length;
-      if (c) rows = `<div class="log-row"><span class="log-key">Erledigt</span><span class="log-val">${c}/${d.mobility.length}</span></div>`;
-    }
-    const wLabel = e.w===0?'Diese Woche':e.w===-1?'Letzte Woche':`Vor ${-e.w} Wochen`;
-    return `<div class="log-entry">
-      <div class="log-date">
-        <span class="log-when">${d.label} – ${d.type}</span>
-        <span class="badge b-${d.badge}">${wLabel}</span>
-      </div>
-      ${rows || '<div style="color:var(--muted);font-size:12px">Keine Details</div>'}
-    </div>`;
-  }).join('');
-}
-
-// ════════════════════════════════════════════════════
-//  PLAN PAGE
-// ════════════════════════════════════════════════════
-function renderPlanPage() {
-  const phase  = getPhase();
-  const phases = [
-    { n:'Woche 1–2', title:'Einstieg & Fundament', color:'var(--upper)', points:['Gewichte moderat – Technik vor Last','Laufdistanz bei 5–6 km halten','Mobility (So) nicht überspringen','Körper ans kombinierte Training gewöhnen'] },
-    { n:'Woche 3–4', title:'Aufbau',               color:'var(--run)',   points:['Gewichte um 5–10% erhöhen','Laufdistanz (Di) auf 7 km erhöhen','Intervalle (Fr) auf 8×2 Min erhöhen','Optional: 5. Einheit als Zusatzlaufen'] },
-    { n:'Woche 5',   title:'Deload & Test',         color:'var(--mob)',   points:['Volumen um 30–40% reduzieren','Gewichte gleich lassen','5km-Zeit zum Vergleich testen','Körper erholen & Fortschritte festigen'] }
-  ];
-
-  document.getElementById('plan').innerHTML = `
-    <div class="phase-banner">
-      <span class="phase-icon">📍</span>
-      <div><div class="phase-text">Aktuell: ${phase.n}</div><div class="phase-sub">${phase.desc}</div></div>
-    </div>
-    <div class="slabel">Phasen</div>
-    ${phases.map(p => `<div class="card">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-        <span style="font-size:11px;font-weight:700;color:${p.color};background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:3px 10px;border-radius:20px">${p.n}</span>
-        <span style="font-size:14px;font-weight:600">${p.title}</span>
-      </div>
-      ${p.points.map(pt => `<div style="display:flex;gap:8px;padding:5px 0;font-size:13px;color:var(--muted2)"><span style="color:${p.color};font-weight:700;flex-shrink:0">→</span>${pt}</div>`).join('')}
-    </div>`).join('')}
-    <div class="slabel" style="margin-top:16px">Alle Trainingstage</div>
-    ${PLAN.map((day, i) => `
-      <div class="card" style="cursor:pointer" onclick="selectedDayIdx=${i};showPage('today')">
-        <div class="card-header">
-          <div class="card-title"><span>${day.icon}</span><span>${day.label} – ${day.type}</span><span class="badge b-${day.badge}">${{upper:'OK',lower:'UK',run:'Lauf',mob:'Mob'}[day.badge]}</span></div>
-          <span style="font-size:11px;color:var(--upper)">öffnen →</span>
-        </div>
-        <div style="font-size:11px;color:var(--muted2);margin-bottom:${(day.exercises||day.mobility)?'10px':'0'}">${day.sub}</div>
-        ${day.exercises ? `<div>${day.exercises.map(ex => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted2)">${ex.name}</span><span style="font-weight:500">${ex.target}</span></div>`).join('')}</div>` : ''}
-        ${day.mobility  ? `<div>${day.mobility.map(m => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted2)">${m.name}</span><span style="font-weight:500">${m.meta}</span></div>`).join('')}</div>` : ''}
-        ${day.run ? `<div style="font-size:12px;color:var(--muted2)">${day.interval?'6–8× 2 Min schnell / 2 Min locker · 80–85% HF':'5–7 km ruhig @ 65–70% Herzfrequenz'}</div>` : ''}
-      </div>`).join('')}`;
-}
-
-// ════════════════════════════════════════════════════
-//  SETTINGS PAGE
-// ════════════════════════════════════════════════════
-function renderSettings() {
-  const phase   = getPhase();
-  const st      = S.get('start_ts', null);
-  const start   = st ? new Date(st).toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : 'Nicht gesetzt';
-  const stats   = calcUserStats(userProfile);
-  const profHTML = userProfile ? `
-    <div class="slabel">Profil</div>
-    <div class="card">
-      <div class="settings-row">
-        <div>
-          <div class="settings-label">${userProfile.username} ${userProfile.tag||''}</div>
-          <div class="settings-sub">${currentUser?.email}</div>
-        </div>
-        <div class="profile-avatar" style="width:38px;height:38px;font-size:14px;border-radius:50%;background:linear-gradient(135deg,var(--upper),var(--lower));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff">${(userProfile.username||'?').charAt(0).toUpperCase()}</div>
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Körperdaten</div><div class="settings-sub">${userProfile.height} cm · ${userProfile.weight} kg${userProfile.age?' · '+userProfile.age+' Jahre':''}</div></div>
-      </div>
-      ${stats ? `<div class="settings-row">
-        <div><div class="settings-label">Empfehlungen</div><div class="settings-sub">${stats.calories} kcal · ${stats.protein}g Protein · ${stats.water}L Wasser · ${stats.steps.toLocaleString('de')} Schritte</div></div>
-      </div>` : ''}
-    </div>` : '';
-
-  document.getElementById('settings').innerHTML = `
-    ${profHTML}
-    <div class="slabel">Programm</div>
-    <div class="card">
-      <div class="settings-row">
-        <div><div class="settings-label">Startdatum</div><div class="settings-sub">${start}</div></div>
-        <button class="settings-btn" onclick="if(confirm('Startdatum auf heute zurücksetzen?')){S.set('start_ts',Date.now());renderSettings();toast('Startdatum gesetzt')}">Zurücksetzen</button>
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Aktuelle Phase</div><div class="settings-sub">${phase.n}: ${phase.desc}</div></div>
-      </div>
-    </div>
-    <div class="slabel">Daten</div>
-    <div class="card">
-      <div class="settings-row">
-        <div><div class="settings-label">Exportieren</div><div class="settings-sub">Alle Workout-Daten sichern</div></div>
-        <button class="settings-btn" onclick="exportData()">📥 Export</button>
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Importieren</div><div class="settings-sub">Backup wiederherstellen</div></div>
-        <button class="settings-btn" style="color:var(--run)" onclick="document.getElementById('importFile').click()">📤 Import</button>
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Lokale Daten löschen</div><div class="settings-sub">Workout-Einträge entfernen</div></div>
-        <button class="danger-btn" onclick="if(confirm('Alle lokalen Workout-Daten löschen?')){localStorage.clear();toast('Lokale Daten gelöscht');renderToday()}">Löschen</button>
-      </div>
-    </div>
-    <div class="slabel">Account</div>
-    <div class="card">
-      <div class="settings-row">
-        <div><div class="settings-label">Ausloggen</div><div class="settings-sub">Kehrt zum Login zurück</div></div>
-        <button class="danger-btn" onclick="handleLogout()">Logout</button>
-      </div>
-    </div>`;
-}
-
-// ════════════════════════════════════════════════════
-//  EXPORT / IMPORT
-// ════════════════════════════════════════════════════
-function exportData() {
-  const data = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    try { data[k] = JSON.parse(localStorage.getItem(k)); } catch(e) { data[k] = localStorage.getItem(k); }
-  }
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = `trainingsplan_backup_${new Date().toISOString().slice(0,10)}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  toast('✓ Daten exportiert!');
-}
-
-function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      Object.keys(data).forEach(k => {
-        localStorage.setItem(k, typeof data[k] === 'object' ? JSON.stringify(data[k]) : data[k]);
-      });
-      toast('✓ Daten erfolgreich importiert!');
-      setTimeout(() => location.reload(), 1000);
-    } catch(err) {
-      toast('❌ Fehler beim Parsen der Datei');
-    }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-// ════════════════════════════════════════════════════
-//  BOOT
-// ════════════════════════════════════════════════════
-checkSession();
-</script>
+  <!-- ==========================================================================
+       UNSER SEPARATER JAVASCRIPT-CODE
+       ========================================================================== -->
+  <script src="script.js"></script>
 </body>
 </html>

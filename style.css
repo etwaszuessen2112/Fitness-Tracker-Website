@@ -1,0 +1,1758 @@
+/* ==========================================================================
+   DESIGN-SYSTEM & VARIABLEN
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1) GLOBALE BASIS-VARIABLEN
+   Diese Werte gelten für die GESAMTE Seite (Hintergrund, Schrift, Grundlayout).
+   Hier bewusst zentral gehalten, weil sie das Grundgerüst aller Seiten bilden.
+   -------------------------------------------------------------------------- */
+:root {
+  /* Hintergrundfarben (Abstufungen von Dunkelblau/Grau) */
+  --bg: #0a0c12;
+  /* Seitenhintergrund (body) */
+  --bg2: #10131d;
+  /* Karten/Boxen Ebene 1 (z.B. .card, .auth-box) */
+  --bg3: #161923;
+  /* Karten/Boxen Ebene 2 (z.B. .card-sm, .wday) */
+  --bg4: #1c2030;
+  /* Eingabefelder & vertiefte Elemente */
+
+  /* Rahmenfarben (leicht transparent für modernen Glass-Effekt) */
+  --border: rgba(255, 255, 255, 0.07);
+  --border2: rgba(255, 255, 255, 0.13);
+
+  /* Textfarben */
+  --text: #eef0f8;
+  --muted: #5a6080;
+  --muted2: #8890b0;
+
+  /* Schriftart */
+  --font: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   2) KATEGORIE-FARBEN (Trainingsbereiche)
+   Jede Kachel-Kategorie hat HIER ihre eigenen, komplett unabhängigen
+   Variablen (Akzentfarbe, Hintergrund-Tönung, Rahmenfarbe).
+   Diese hängen NICHT mehr voneinander ab -> jede Kategorie ist einzeln
+   und gefahrlos änderbar, ohne eine andere Kategorie zu beeinflussen.
+   -------------------------------------------------------------------------- */
+:root {
+
+  /* Oberkörper / Kraft (Upper Body) */
+  --cat-upper-color: #fa574b;
+  --cat-upper-bg: rgba(250, 87, 75, 0.1);
+  --cat-upper-border: rgba(250, 87, 75, 0.5);
+
+  /* Unterkörper / Kraft (Lower Body) */
+  --cat-lower-color: #6f91ff;
+  --cat-lower-bg: rgba(111, 145, 255, 0.1);
+  --cat-lower-border: rgba(111, 145, 255, 0.5);
+
+  /* Laufen (Running) */
+  --cat-run-color: #34d399;
+  --cat-run-bg: rgba(52, 211, 153, 0.1);
+  --cat-run-border: rgba(52, 211, 153, 0.2);
+
+  /* Mobility & Dehnung */
+  --cat-mob-color: #fbbf24;
+  --cat-mob-bg: rgba(251, 191, 36, 0.1);
+  --cat-mob-border: rgba(251, 191, 36, 0.2);
+
+  /* Ganzkörperzirkel (GZK) */
+  --cat-gzk-color: #a78bfa;
+  --cat-gzk-bg: rgba(167, 139, 250, 0.1);
+  --cat-gzk-border: rgba(86, 35, 240, 0.2);
+
+  /* Fehler & Warnungen */
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.1);
+  --danger-border: rgba(248, 113, 113, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   3) KOMPONENTEN-VARIABLEN
+   Frei wählbare Akzentfarben für einzelne UI-Bausteine, die NICHT direkt
+   an eine Trainingskategorie gekoppelt sind (z.B. Login-Button, Fokus-Rahmen
+   von Eingabefeldern, Avatare, Statistik-Werte). So lässt sich z.B. die
+   Akzentfarbe des Logins ändern, ohne die Kachel-Farben anzufassen.
+   -------------------------------------------------------------------------- */
+:root {
+
+  /* Login / Registrierung */
+  --auth-accent-2: #ba4bfa;
+  --auth-accent: #4a7de8;
+
+  /* Fokus-Rahmen für Standard-Eingabefelder (Onboarding, Übungstabelle etc.) */
+  --input-focus: #ba4bfa;
+
+  /* Branding (Logo-Schriftzug, Avatare) */
+  --brand-grad-1: #ba4bfa;
+  --brand-grad-2: #4a7de8;
+  --avatar-grad-1: #ba4bfa;
+  --avatar-grad-2: #4a7de8;
+
+  /* Statistikseite: PR-Werte, Mini-Balken, Wochenbalken */
+  --stat-accent: #ba4bfa;
+
+  /* "Erledigt"-Markierungen (z.B. Tagesabschluss, Wochentag-Status) */
+  --success-color: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.1);
+
+  /* PR-Tag (Personal Record Etikett) */
+  --pr-tag-color: #fbbf24;
+  --pr-tag-bg: rgba(251, 191, 36, 0.15);
+  --pr-tag-border: rgba(251, 191, 36, 0.2);
+
+  /* Sync-Status-Punkt (Supabase Verbindung) */
+  --sync-pending-color: #fa824b;
+  --sync-syncing-color: #fbbf24;
+
+  /* Phasen-Banner auf dem Dashboard */
+  --phase-banner-grad-1: var(--cat-upper-bg);
+  --phase-banner-grad-2: var(--cat-lower-bg);
+  --phase-banner-border: rgba(186, 75, 250, 0.15);
+
+  /* Pace-Anzeige (Lauf-Tempo) Verlauf */
+  --pace-bar-grad-1: #34d399;
+  --pace-bar-grad-2: #ba4bfa;
+}
+
+/* ==========================================================================
+   ALLGEMEINE STYLES & RESET
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  /* Entfernt den grauen Klick-Hintergrund auf Mobilgeräten */
+}
+
+html,
+body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100%;
+  padding-bottom: 80px;
+  /* Platzhalter für die Navigation am unteren Bildschirmrand/Footer */
+}
+
+input,
+select,
+button,
+textarea {
+  font-family: var(--font);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ==========================================================================
+   AUTHENTIFIZIERUNG (Login & Registrierung)
+   ========================================================================== */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 28px 24px;
+}
+
+.auth-logo {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.auth-title {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.auth-sub {
+  font-size: 12px;
+  color: var(--muted2);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-input {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 15px;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 10px;
+}
+
+.auth-input:focus {
+  border-color: var(--auth-accent);
+}
+
+.auth-btn {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 8px;
+}
+
+.auth-btn-primary {
+  background: linear-gradient(135deg, var(--auth-accent), var(--auth-accent-2));
+  color: #fff;
+}
+
+.auth-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.auth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  color: var(--danger);
+  font-size: 12px;
+  text-align: center;
+  min-height: 18px;
+  margin-top: 4px;
+}
+
+.auth-success {
+  color: var(--success-color);
+  font-size: 12px;
+  text-align: center;
+  min-height: 18px;
+  margin-top: 4px;
+}
+
+.auth-tabs {
+  display: flex;
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 20px;
+  gap: 3px;
+}
+
+.auth-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--muted2);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.auth-tab.on {
+  background: var(--bg2);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   ONBOARDING (Ersteinrichtung des Benutzerprofils)
+   ========================================================================== */
+.onboard-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9998;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.onboard-box {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 28px 24px;
+}
+
+.onboard-step {
+  display: none;
+}
+
+.onboard-step.on {
+  display: block;
+}
+
+.step-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border2);
+  transition: all 0.2s;
+}
+
+.step-dot.on {
+  background: var(--input-focus);
+  width: 20px;
+  border-radius: 4px;
+}
+
+.ob-field-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ob-field {
+  flex: 1;
+}
+
+.ob-label {
+  font-size: 11px;
+  color: var(--muted2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.ob-input {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 15px;
+  padding: 11px 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.ob-input:focus {
+  border-color: var(--input-focus);
+}
+
+.goal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.goal-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.goal-card:hover {
+  border-color: var(--border2);
+}
+
+.goal-card.sel {
+  border-color: var(--input-focus);
+  background: rgba(186, 75, 250, 0.1);
+}
+
+.goal-card-icon {
+  font-size: 22px;
+  margin-bottom: 5px;
+}
+
+.goal-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.goal-card-sub {
+  font-size: 10px;
+  color: var(--muted2);
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   NAVIGATION (Kopfzeile & Menüführung)
+   ========================================================================== */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: rgba(10, 12, 18, 0.93);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 52px;
+  gap: 2px;
+}
+
+.nav-brand {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--brand-grad-1), var(--brand-grad-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-right: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border2);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: var(--muted2);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.nav-btn:hover {
+  color: var(--text);
+  background: var(--bg4);
+}
+
+.nav-btn.on {
+  color: var(--text);
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+}
+
+.nav-scroll {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow-x: auto;
+  gap: 2px;
+  scrollbar-width: none;
+}
+
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.nav-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avatar-grad-1), var(--avatar-grad-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Synchronisations-Statusanzeige (Supabase Connection) */
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: none;
+  flex-shrink: 0;
+}
+
+.sync-dot.pending {
+  display: block;
+  background: var(--sync-pending-color);
+}
+
+.sync-dot.syncing {
+  display: block;
+  background: var(--sync-syncing-color);
+  animation: syncPulse 1s ease-in-out infinite;
+}
+
+@keyframes syncPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ==========================================================================
+   SEITENSTRUKTUR & ANIMATIONEN
+   ========================================================================== */
+.page {
+  display: none;
+  padding: 68px 16px 16px;
+  max-width: 760px;
+  margin: 0 auto;
+  animation: fadeIn 0.2s ease;
+}
+
+.page.on {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================================================
+   DASHBOARD-WIDGETS & STATS
+   ========================================================================== */
+.widget-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.widget {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.widget-label {
+  font-size: 10px;
+  color: var(--muted2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.widget-val {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  color: var(--text);
+  line-height: 1;
+}
+
+.widget-unit {
+  font-size: 11px;
+  color: var(--muted2);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.widget-bar {
+  height: 4px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.widget-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.widget-input-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.widget-input {
+  flex: 1;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s;
+  text-align: center;
+}
+
+.widget-input:focus {
+  border-color: var(--input-focus);
+}
+
+.widget-add-btn {
+  background: rgba(186, 75, 250, 0.1);
+  border: 1px solid rgba(186, 75, 250, 0.2);
+  color: var(--input-focus);
+  border-radius: 7px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.widget-add-btn:hover {
+  background: rgba(91, 143, 255, 0.18);
+}
+
+/* ==========================================================================
+   CARDS (Karten & Container für Inhalte)
+   ========================================================================== */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-sm {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   BADGES (Farbige Etiketten für Workouts)
+   ========================================================================== */
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.b-upper {
+  background: var(--cat-upper-bg);
+  color: var(--cat-upper-color);
+  border: 1px solid var(--cat-upper-border);
+}
+
+.b-lower {
+  background: var(--cat-lower-bg);
+  color: var(--cat-lower-color);
+  border: 1px solid var(--cat-lower-border);
+}
+
+.b-run {
+  background: var(--cat-run-bg);
+  color: var(--cat-run-color);
+  border: 1px solid var(--cat-run-border);
+}
+
+.b-mob {
+  background: var(--cat-mob-bg);
+  color: var(--cat-mob-color);
+  border: 1px solid var(--cat-mob-border);
+}
+
+.b-gzk {
+  background: var(--cat-gzk-bg);
+  color: var(--cat-gzk-color);
+  border: 1px solid var(--cat-gzk-border);
+}
+
+/* ==========================================================================
+   WOCHEN-ÜBERSICHT (Kleine Wochentagsbuttons oben)
+   ========================================================================== */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.wday {
+  background: var(--bg3);
+  border: 3px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.wday:hover {
+  border-color: var(--border2);
+}
+
+.wday.done {
+  border-color: var(--success-color) !important;
+  background: var(--success-bg);
+}
+
+.wday.selected {
+  border-color: var(--input-focus);
+  background: rgba(186, 75, 250, 0.1);
+}
+
+/* Trainingstyp-Färbung: zeigt per Punkt/Rahmen an, welche Art Einheit
+   an diesem Tag geplant ist. Wird per JS als zusätzliche Klasse gesetzt,
+   z.B. <div class="wday cat-upper"> für einen Krafttag Oberkörper. */
+
+.wday.cat-upper {
+  border-color: var(--cat-upper-border);
+}
+
+.wday.cat-upper .wday-dot {
+  background: var(--muted2);
+}
+
+.wday.cat-lower {
+  border-color: var(--cat-lower-border);
+}
+
+.wday.cat-lower .wday-dot {
+  background: var(--muted2);
+}
+
+.wday.cat-run {
+  border-color: var(--cat-run-border);
+}
+
+.wday.cat-run .wday-dot {
+  background: var(--muted2);
+}
+
+.wday.cat-mob {
+  border-color: var(--cat-mob-border);
+}
+
+.wday.cat-mob .wday-dot {
+  background: var(--muted2);
+}
+
+.wday.cat-gzk {
+  border-color: var(--cat-gzk-border);
+}
+
+.wday.cat-gzk .wday-dot {
+  background: var(--muted2);
+}
+
+/* Auswahl (.selected) und Erledigt (.done) haben weiterhin Vorrang,
+   damit man immer sieht, was gerade ausgewählt bzw. abgeschlossen ist. */
+.wday.selected.cat-upper,
+.wday.selected.cat-lower,
+.wday.selected.cat-run,
+.wday.selected.cat-mob,
+.wday.selected.cat-gzk {
+  border-color: var(--input-focus);
+}
+
+.wday.done.cat-upper,
+.wday.done.cat-lower,
+.wday.done.cat-run,
+.wday.done.cat-mob,
+.wday.done.cat-gzk {
+  border-color: var(--success-color) !important;
+}
+
+.wday-label {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.wday-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border2);
+  margin: 0 auto;
+  margin-top: 4px;
+}
+
+.wday.done .wday-dot {
+  background: var(--success-color);
+}
+
+/* ==========================================================================
+   ÜBUNGSTABELLE (Gym-Workout Eingabebereich)
+   ========================================================================== */
+.ex-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ex-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 320px;
+}
+
+.ex-table th {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 8px 10px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+
+.ex-table th:not(:first-child) {
+  text-align: center;
+}
+
+.ex-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.ex-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ex-table td:not(:first-child) {
+  text-align: center;
+}
+
+.ex-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ex-target {
+  font-size: 10px;
+  color: var(--muted2);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.ex-note {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+.ex-suggest {
+  font-size: 10px;
+  color: var(--cat-mob-color);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Eingabefelder in der Tabelle */
+input.val {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  width: 56px;
+  padding: 6px 4px;
+  text-align: center;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+input.val:focus {
+  border-color: var(--input-focus);
+}
+
+input.val.has-val {
+  border-color: rgba(91, 143, 255, 0.3);
+  background: rgba(91, 143, 255, 0.06);
+}
+
+/* ==========================================================================
+   FORTSCHRITTS-RING (Kreisförmige Prozentanzeige)
+   ========================================================================== */
+.ring-wrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+
+.ring-wrap svg {
+  transform: rotate(-90deg);
+  /* Oben starten */
+}
+
+.ring-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.ring-n {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ring-l {
+  font-size: 9px;
+  color: var(--muted2);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Einheit abschließen - Button */
+.done-btn {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  color: var(--muted2);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.done-btn:hover {
+  border-color: var(--success-color);
+  color: var(--success-color);
+  background: var(--success-bg);
+}
+
+.done-btn.marked {
+  background: var(--success-bg);
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
+
+/* ==========================================================================
+   LAUFSPEZIFISCHE STYLES (Running Screen)
+   ========================================================================== */
+.run-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 400px) {
+  .run-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.run-field label {
+  font-size: 10px;
+  color: var(--muted2);
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.run-field input {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-size: 16px;
+  padding: 10px 12px;
+  font-weight: 600;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.run-field input:focus {
+  border-color: var(--cat-run-color);
+}
+
+.run-field input.has-val {
+  border-color: var(--cat-run-border);
+  background: var(--cat-run-bg);
+}
+
+/* Pace-Bereich */
+.pace-display {
+  background: linear-gradient(135deg, var(--cat-run-bg), rgba(52, 211, 153, 0.04));
+  border: 1px solid var(--cat-run-border);
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.pace-label {
+  font-size: 10px;
+  color: var(--cat-run-color);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.pace-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--cat-run-color);
+  letter-spacing: -1px;
+}
+
+.pace-unit {
+  font-size: 12px;
+  color: var(--muted2);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.pace-bar-wrap {
+  margin-top: 10px;
+}
+
+.pace-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.pace-bar {
+  height: 4px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.pace-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--pace-bar-grad-1), var(--pace-bar-grad-2));
+  transition: width 0.5s ease;
+}
+
+/* Gefühlsauswahl Buttons (Emojis) */
+.feel-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.feel-btn {
+  flex: 1;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted2);
+  font-size: 14px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.feel-btn.on {
+  border-color: var(--cat-run-color);
+  background: var(--cat-run-bg);
+}
+
+/* ==========================================================================
+   MOBILITY (Beweglichkeit & Yoga Tag)
+   ========================================================================== */
+.mob-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mob-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mob-item.checked {
+  border-color: var(--cat-mob-color);
+  background: var(--cat-mob-bg);
+}
+
+.mob-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  color: transparent;
+}
+
+.mob-item.checked .mob-check {
+  background: var(--cat-mob-color);
+  border-color: var(--cat-mob-color);
+  color: #000;
+}
+
+.mob-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mob-meta {
+  font-size: 11px;
+  color: var(--muted2);
+  margin-top: 1px;
+}
+
+/* ==========================================================================
+   VORWOCHEN-WERTE (Vergleichswerte)
+   ========================================================================== */
+.prev-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 10px;
+}
+
+.prev-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.prev-badge {
+  font-size: 10px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--muted2);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.prev-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.prev-row:last-child {
+  border-bottom: none;
+}
+
+.prev-key {
+  color: var(--muted2);
+}
+
+.prev-val {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Personal Record (PR) Tag */
+.pr-tag {
+  font-size: 9px;
+  background: var(--pr-tag-bg);
+  color: var(--pr-tag-color);
+  border: 1px solid var(--pr-tag-border);
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: 5px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   WOCHENSEITE (Calendar/Week View)
+   ========================================================================== */
+.week-sel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.week-nav {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.week-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.week-label {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+  text-align: center;
+}
+
+.prog-wrap {
+  margin-bottom: 6px;
+}
+
+.prog-lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted2);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.prog-bar {
+  height: 5px;
+  background: var(--bg4);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Tagessummen Karte */
+.day-sum {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.15s;
+}
+
+.day-sum:hover {
+  border-color: var(--border2);
+}
+
+.day-sum.done-card {
+  border-color: rgba(52, 211, 153, 0.25);
+  background: rgba(52, 211, 153, 0.04);
+}
+
+.day-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   STATISTIKSEITE (Charts & PRs)
+   ========================================================================== */
+.stats-big-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-big {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.stat-big-n {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-big-l {
+  font-size: 12px;
+  color: var(--muted2);
+  font-weight: 500;
+}
+
+.stat-big-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* PR List Items */
+.pr-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pr-item:last-child {
+  border-bottom: none;
+}
+
+.pr-name {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.pr-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--stat-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.pr-bar-wrap {
+  flex: 1.5;
+}
+
+.mini-bar {
+  height: 3px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mini-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--stat-accent);
+}
+
+/* Bar Chart (Wochenaktivität) */
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 80px;
+  margin-top: 8px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.bar-inner {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: rgba(186, 75, 250, 0.1);
+  border: 1px solid rgba(186, 75, 250, 0.15);
+  min-height: 2px;
+}
+
+.bar-inner.filled {
+  background: linear-gradient(180deg, var(--stat-accent), rgba(186, 75, 250, 0.4));
+}
+
+.bar-lbl {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   VERLAUF (Log Page Entries)
+   ========================================================================== */
+.log-entry {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 8px;
+}
+
+.log-date {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.log-when {
+  font-size: 11px;
+  color: var(--muted2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.log-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.log-row:last-child {
+  border-bottom: none;
+}
+
+.log-key {
+  color: var(--muted2);
+}
+
+.log-val {
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   EINSTELLUNGEN
+   ========================================================================== */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.settings-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settings-sub {
+  font-size: 11px;
+  color: var(--muted2);
+  margin-top: 2px;
+}
+
+.settings-btn {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--input-focus);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.settings-btn:hover {
+  border-color: var(--input-focus);
+  background: rgba(186, 75, 250, 0.1);
+}
+
+.danger-btn {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: var(--danger);
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.danger-btn:hover {
+  background: rgba(248, 113, 113, 0.18);
+}
+
+/* ==========================================================================
+   TOAST BENACHRICHTIGUNGEN
+   ========================================================================== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  z-index: 9990;
+  opacity: 0;
+  transition: all 0.3s;
+  white-space: nowrap;
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   SONSTIGES & UTILITIES
+   ========================================================================== */
+.slabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  margin: 0 0 8px;
+}
+
+.phase-banner {
+  background: linear-gradient(135deg, var(--phase-banner-grad-1), var(--phase-banner-grad-2));
+  border: 1px solid var(--phase-banner-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.phase-icon {
+  font-size: 20px;
+}
+
+.phase-text {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.phase-sub {
+  font-size: 11px;
+  color: var(--muted2);
+  margin-top: 1px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 32px 0;
+  font-size: 13px;
+}
+
+.profile-banner {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avatar-grad-1), var(--avatar-grad-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.calcs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.calc-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.calc-n {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 2px;
+}
+
+.calc-l {
+  font-size: 10px;
+  color: var(--muted2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.weight-chart-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   RESPONSIVE STYLES
+   ========================================================================== */
+@media (max-width: 480px) {
+  .stats-big-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-big-n {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .stats-big-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .run-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
